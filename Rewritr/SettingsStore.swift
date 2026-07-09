@@ -115,7 +115,7 @@ final class SettingsStore: ObservableObject {
     }
 }
 
-private enum SettingsKey {
+enum SettingsKey {
     static let providerBaseURL = "providerBaseURL"
     static let providerModel = "providerModel"
     static let requestTimeoutSeconds = "requestTimeoutSeconds"

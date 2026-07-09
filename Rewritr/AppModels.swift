@@ -72,3 +72,54 @@ struct ProviderConfig: Equatable, Sendable {
         return components.url
     }
 }
+
+enum RewriteMode: String, Sendable {
+    case refine
+}
+
+struct RewriteRequest: Equatable, Sendable {
+    let inputText: String
+    let mode: RewriteMode
+    let behavior: RewriteBehavior
+    let allowsLongRewrite: Bool
+
+    init(
+        inputText: String,
+        mode: RewriteMode = .refine,
+        behavior: RewriteBehavior,
+        allowsLongRewrite: Bool = false
+    ) {
+        self.inputText = inputText
+        self.mode = mode
+        self.behavior = behavior
+        self.allowsLongRewrite = allowsLongRewrite
+    }
+}
+
+struct RewriteResult: Equatable, Sendable {
+    let refinedText: String
+}
+
+enum RewriteLengthPolicy {
+    static let previewWarningWordCount = 4_000
+    static let instantWarningWordCount = 2_000
+
+    static func wordCount(in text: String) -> Int {
+        text
+            .split { $0.isWhitespace || $0.isNewline }
+            .count
+    }
+
+    static func warningThreshold(for behavior: RewriteBehavior) -> Int {
+        switch behavior {
+        case .previewBeforeReplacing:
+            previewWarningWordCount
+        case .replaceInstantly:
+            instantWarningWordCount
+        }
+    }
+
+    static func requiresWarning(wordCount: Int, behavior: RewriteBehavior) -> Bool {
+        wordCount >= warningThreshold(for: behavior)
+    }
+}

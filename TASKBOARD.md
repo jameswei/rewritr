@@ -46,11 +46,11 @@ This board tracks implementation work for Rewritr v1. Keep it updated as each sl
 
 ## Milestone 4: Rewrite Core
 
-- `[ ]` Add rewrite prompt builder matching the natural, smooth, native-like rewrite contract.
-- `[ ]` Add `RewriteRequest`, `RewriteMode`, `RewriteBehavior`, and `RewriteResult` flow types.
-- `[ ]` Add fixed hidden temperature `0.2`.
-- `[ ]` Add word counting and length-warning thresholds.
-- `[ ]` Add timeout, network, provider, cancellation, and malformed-response handling.
+- `[x]` Add rewrite prompt builder matching the natural, smooth, native-like rewrite contract.
+- `[x]` Add `RewriteRequest`, `RewriteMode`, `RewriteBehavior`, and `RewriteResult` flow types.
+- `[x]` Add fixed hidden temperature `0.2`.
+- `[x]` Add word counting and length-warning thresholds.
+- `[x]` Add timeout, network, provider, cancellation, and malformed-response handling.
 
 ## Milestone 5: Rewrite Commit UI
 

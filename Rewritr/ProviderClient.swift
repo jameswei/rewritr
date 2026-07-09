@@ -5,6 +5,7 @@ enum ProviderClientError: LocalizedError, Sendable {
     case invalidHTTPResponse
     case providerError(statusCode: Int, message: String)
     case emptyResponse
+    case malformedResponse
     case unexpectedTestResponse(String)
 
     var errorDescription: String? {
@@ -17,6 +18,8 @@ enum ProviderClientError: LocalizedError, Sendable {
             "Provider error \(statusCode): \(message)"
         case .emptyResponse:
             "Provider returned an empty response."
+        case .malformedResponse:
+            "Provider returned a response Rewritr could not read."
         case .unexpectedTestResponse(let value):
             "Provider responded, but returned \(value) instead of OK."
         }
@@ -84,7 +87,12 @@ struct ProviderClient: Sendable {
             throw ProviderClientError.providerError(statusCode: httpResponse.statusCode, message: message)
         }
 
-        let decoded = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        let decoded: ChatCompletionResponse
+        do {
+            decoded = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        } catch {
+            throw ProviderClientError.malformedResponse
+        }
         guard let content = decoded.choices.first?.message.content, !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw ProviderClientError.emptyResponse
         }

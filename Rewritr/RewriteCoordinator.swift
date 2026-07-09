@@ -4,11 +4,16 @@ import os
 @MainActor
 final class RewriteCoordinator {
     private let clipboardAutomator: ClipboardAutomator
+    private let rewriteService: RewriteService
     private let logger = Logger(subsystem: "space.lifeplayer.rewritr", category: "rewrite")
     private var activeTask: Task<Void, Never>?
 
-    init(clipboardAutomator: ClipboardAutomator = ClipboardAutomator()) {
+    init(
+        clipboardAutomator: ClipboardAutomator = ClipboardAutomator(),
+        rewriteService: RewriteService = RewriteService()
+    ) {
         self.clipboardAutomator = clipboardAutomator
+        self.rewriteService = rewriteService
     }
 
     func triggerRewrite() {
@@ -23,6 +28,8 @@ final class RewriteCoordinator {
         do {
             let capture = try await clipboardAutomator.captureSelectedText()
             logger.info("Captured selected text for rewrite. characters=\(capture.text.count, privacy: .public)")
+            let result = try await rewriteService.rewrite(inputText: capture.text)
+            logger.info("Rewrite completed. characters=\(result.refinedText.count, privacy: .public)")
         } catch is CancellationError {
             logger.debug("Selection capture cancelled.")
         } catch ClipboardAutomationError.emptySelection {

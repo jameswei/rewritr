@@ -15,7 +15,7 @@ enum KeychainError: LocalizedError {
     }
 }
 
-struct KeychainStore {
+struct KeychainStore: Sendable {
     private let service: String
 
     init(service: String = Bundle.main.bundleIdentifier ?? "space.lifeplayer.rewritr") {
@@ -80,4 +80,3 @@ struct KeychainStore {
         }
     }
 }
-
