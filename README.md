@@ -2,9 +2,30 @@
 
 [![CI](https://github.com/jameswei/rewritr/actions/workflows/ci.yml/badge.svg)](https://github.com/jameswei/rewritr/actions/workflows/ci.yml)
 
+**Project site:** https://jameswei.github.io/rewritr/
+
 Rewritr is a native macOS menu bar app for non-native English speakers who want to rewrite selected English into smoother, more natural, native-like English.
 
 It is intentionally small: select text in another app, trigger Rewritr, and replace the selected text with a clearer version. Rewritr preserves meaning and avoids academic, thesis-style, overly formal, slangy, or filler-heavy English.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="assets/screenshot_settings.png" width="360" alt="Rewritr settings with provider configuration and rewrite behavior"/></td>
+    <td><img src="assets/screenshot_permissions.png" width="360" alt="Rewritr permission setup screen with Accessibility permission status"/></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Settings</em></td>
+    <td align="center"><em>Permission setup</em></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><img src="assets/screenshot_privacy.png" width="520" alt="macOS Privacy and Security Accessibility permission screen for Rewritr"/></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><em>macOS Accessibility permission</em></td>
+  </tr>
+</table>
 
 ## Download
 
