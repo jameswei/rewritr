@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		1A2B3C4D5E6F700000000001 /* RewritrApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000011 /* RewritrApp.swift */; };
-		1A2B3C4D5E6F700000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000012 /* ContentView.swift */; };
 		1A2B3C4D5E6F700000000003 /* RewritrTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000013 /* RewritrTests.swift */; };
+		1A2B3C4D5E6F700000000039 /* MenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F70000000003A /* MenuBarApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,9 +26,9 @@
 		1A2B3C4D5E6F700000000005 /* Rewritr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Rewritr.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A2B3C4D5E6F700000000006 /* RewritrTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RewritrTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A2B3C4D5E6F700000000011 /* RewritrApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewritrApp.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F700000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F700000000013 /* RewritrTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewritrTests.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F700000000014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1A2B3C4D5E6F70000000003A /* MenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +62,7 @@
 			isa = PBXGroup;
 			children = (
 				1A2B3C4D5E6F700000000011 /* RewritrApp.swift */,
-				1A2B3C4D5E6F700000000012 /* ContentView.swift */,
+				1A2B3C4D5E6F70000000003A /* MenuBarApp.swift */,
 				1A2B3C4D5E6F700000000014 /* Info.plist */,
 			);
 			path = Rewritr;
@@ -184,7 +184,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A2B3C4D5E6F700000000001 /* RewritrApp.swift in Sources */,
-				1A2B3C4D5E6F700000000002 /* ContentView.swift in Sources */,
+				1A2B3C4D5E6F700000000039 /* MenuBarApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,4 +421,3 @@
 	};
 	rootObject = 1A2B3C4D5E6F700000000020 /* Project object */;
 }
-
