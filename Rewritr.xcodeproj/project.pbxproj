@@ -10,6 +10,11 @@
 		1A2B3C4D5E6F700000000001 /* RewritrApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000011 /* RewritrApp.swift */; };
 		1A2B3C4D5E6F700000000003 /* RewritrTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000013 /* RewritrTests.swift */; };
 		1A2B3C4D5E6F700000000039 /* MenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F70000000003A /* MenuBarApp.swift */; };
+		1A2B3C4D5E6F70000000003B /* AppModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000040 /* AppModels.swift */; };
+		1A2B3C4D5E6F70000000003C /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000041 /* KeychainStore.swift */; };
+		1A2B3C4D5E6F70000000003D /* ProviderClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000042 /* ProviderClient.swift */; };
+		1A2B3C4D5E6F70000000003E /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000043 /* SettingsStore.swift */; };
+		1A2B3C4D5E6F70000000003F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000044 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +34,11 @@
 		1A2B3C4D5E6F700000000013 /* RewritrTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewritrTests.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F700000000014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1A2B3C4D5E6F70000000003A /* MenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarApp.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F700000000040 /* AppModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModels.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F700000000041 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F700000000042 /* ProviderClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderClient.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F700000000043 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F700000000044 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +73,11 @@
 			children = (
 				1A2B3C4D5E6F700000000011 /* RewritrApp.swift */,
 				1A2B3C4D5E6F70000000003A /* MenuBarApp.swift */,
+				1A2B3C4D5E6F700000000040 /* AppModels.swift */,
+				1A2B3C4D5E6F700000000041 /* KeychainStore.swift */,
+				1A2B3C4D5E6F700000000042 /* ProviderClient.swift */,
+				1A2B3C4D5E6F700000000043 /* SettingsStore.swift */,
+				1A2B3C4D5E6F700000000044 /* SettingsView.swift */,
 				1A2B3C4D5E6F700000000014 /* Info.plist */,
 			);
 			path = Rewritr;
@@ -185,6 +200,11 @@
 			files = (
 				1A2B3C4D5E6F700000000001 /* RewritrApp.swift in Sources */,
 				1A2B3C4D5E6F700000000039 /* MenuBarApp.swift in Sources */,
+				1A2B3C4D5E6F70000000003B /* AppModels.swift in Sources */,
+				1A2B3C4D5E6F70000000003C /* KeychainStore.swift in Sources */,
+				1A2B3C4D5E6F70000000003D /* ProviderClient.swift in Sources */,
+				1A2B3C4D5E6F70000000003E /* SettingsStore.swift in Sources */,
+				1A2B3C4D5E6F70000000003F /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -368,10 +388,12 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = space.lifeplayer.rewritr.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Rewritr.app/Contents/MacOS/Rewritr";
 			};
 			name = Debug;
 		};
@@ -380,10 +402,12 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = space.lifeplayer.rewritr.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Rewritr.app/Contents/MacOS/Rewritr";
 			};
 			name = Release;
 		};

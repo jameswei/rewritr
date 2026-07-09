@@ -105,55 +105,6 @@ private final class WindowDelegate: NSObject, NSWindowDelegate {
     }
 }
 
-struct SettingsView: View {
-    @AppStorage("providerBaseURL") private var providerBaseURL = ""
-    @AppStorage("providerModel") private var providerModel = ""
-    @AppStorage("requestTimeoutSeconds") private var requestTimeoutSeconds = 20
-    @AppStorage("globalShortcutLabel") private var globalShortcutLabel = "Control+Option+R"
-    @AppStorage("rewriteBehavior") private var rewriteBehavior = RewriteBehavior.previewBeforeReplacing.rawValue
-
-    @State private var apiKeyPlaceholder = ""
-
-    var body: some View {
-        Form {
-            Section("Provider") {
-                TextField("Base URL", text: $providerBaseURL)
-                    .textFieldStyle(.roundedBorder)
-                TextField("Model", text: $providerModel)
-                    .textFieldStyle(.roundedBorder)
-                SecureField("API key", text: $apiKeyPlaceholder)
-                    .textFieldStyle(.roundedBorder)
-                HStack {
-                    Stepper("Timeout: \(requestTimeoutSeconds) seconds", value: $requestTimeoutSeconds, in: 5...60, step: 5)
-                    Spacer()
-                    Button("Test") {}
-                        .disabled(true)
-                }
-            }
-
-            Section("Rewrite") {
-                Picker("Behavior", selection: $rewriteBehavior) {
-                    Text("Preview before replacing").tag(RewriteBehavior.previewBeforeReplacing.rawValue)
-                    Text("Replace instantly").tag(RewriteBehavior.replaceInstantly.rawValue)
-                }
-                .pickerStyle(.radioGroup)
-
-                Text("Preview before replacing is the default. Instant replacement is available for users who prefer a faster flow.")
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("Shortcut") {
-                TextField("Global shortcut", text: $globalShortcutLabel)
-                    .textFieldStyle(.roundedBorder)
-                Text("Default: Control+Option+R")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .formStyle(.grouped)
-        .padding(24)
-    }
-}
-
 struct PrivacyView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -227,9 +178,4 @@ struct PermissionView: View {
         }
         NSWorkspace.shared.open(url)
     }
-}
-
-enum RewriteBehavior: String {
-    case previewBeforeReplacing
-    case replaceInstantly
 }
