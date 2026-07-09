@@ -19,6 +19,7 @@
 		1A2B3C4D5E6F700000000046 /* GlobalShortcutController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F700000000049 /* GlobalShortcutController.swift */; };
 		1A2B3C4D5E6F700000000047 /* RewriteCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F70000000004A /* RewriteCoordinator.swift */; };
 		1A2B3C4D5E6F70000000004B /* RewriteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F70000000004C /* RewriteService.swift */; };
+		1A2B3C4D5E6F70000000004D /* RewritePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F70000000004E /* RewritePreview.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 		1A2B3C4D5E6F700000000049 /* GlobalShortcutController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalShortcutController.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F70000000004A /* RewriteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewriteCoordinator.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F70000000004C /* RewriteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewriteService.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F70000000004E /* RewritePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewritePreview.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +92,7 @@
 				1A2B3C4D5E6F700000000049 /* GlobalShortcutController.swift */,
 				1A2B3C4D5E6F70000000004A /* RewriteCoordinator.swift */,
 				1A2B3C4D5E6F70000000004C /* RewriteService.swift */,
+				1A2B3C4D5E6F70000000004E /* RewritePreview.swift */,
 				1A2B3C4D5E6F700000000014 /* Info.plist */,
 			);
 			path = Rewritr;
@@ -221,6 +224,7 @@
 				1A2B3C4D5E6F700000000046 /* GlobalShortcutController.swift in Sources */,
 				1A2B3C4D5E6F700000000047 /* RewriteCoordinator.swift in Sources */,
 				1A2B3C4D5E6F70000000004B /* RewriteService.swift in Sources */,
+				1A2B3C4D5E6F70000000004D /* RewritePreview.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

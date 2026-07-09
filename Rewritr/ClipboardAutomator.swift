@@ -128,6 +128,11 @@ final class ClipboardAutomator {
         }
     }
 
+    func copyTextToClipboard(_ text: String) {
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+    }
+
     private func waitForPasteboardChange(after changeCount: Int, timeout: TimeInterval) async throws -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {

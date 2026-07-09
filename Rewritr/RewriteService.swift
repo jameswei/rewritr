@@ -118,6 +118,10 @@ struct RewriteService: Sendable {
         self.promptBuilder = promptBuilder
     }
 
+    func rewriteBehavior() -> RewriteBehavior {
+        settingsProvider.rewriteBehavior()
+    }
+
     func rewrite(inputText: String, allowsLongRewrite: Bool = false) async throws -> RewriteResult {
         let trimmedInput = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedInput.isEmpty else {

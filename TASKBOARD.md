@@ -54,12 +54,12 @@ This board tracks implementation work for Rewritr v1. Keep it updated as each sl
 
 ## Milestone 5: Rewrite Commit UI
 
-- `[ ]` Add preview popover near cursor.
-- `[ ]` Show loading, result, timeout, error, and empty-selection states.
-- `[ ]` Implement `Replace`, `Copy`, `Retry`, and `Esc` dismiss.
-- `[ ]` Implement instant replacement mode.
-- `[ ]` Restore clipboard after replacement where safe.
-- `[ ]` Leave refined text copied and show an error if paste dispatch fails.
+- `[x]` Add preview popover near cursor.
+- `[x]` Show loading, result, timeout, error, and empty-selection states.
+- `[x]` Implement `Replace`, `Copy`, `Retry`, and `Esc` dismiss.
+- `[x]` Implement instant replacement mode.
+- `[x]` Restore clipboard after replacement where safe.
+- `[x]` Leave refined text copied and show an error if paste dispatch fails.
 
 ## Milestone 6: Product Polish And Docs
 
