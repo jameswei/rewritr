@@ -2,29 +2,47 @@
 
 [![CI](https://github.com/jameswei/rewritr/actions/workflows/ci.yml/badge.svg)](https://github.com/jameswei/rewritr/actions/workflows/ci.yml)
 
-Rewritr is a native macOS app for helping non-native English speakers rewrite selected English into smoother, more natural, native-like English.
+Rewritr is a native macOS menu bar app for non-native English speakers who want to rewrite selected English into smoother, more natural, native-like English.
 
-The v1 product is intentionally small: select text in another app, trigger Rewritr, send the selected text to your configured OpenAI-compatible provider, then either review the rewrite before replacing or replace it instantly. The rewrite should preserve meaning and avoid academic, thesis-like, overly formal, slangy, or filler-heavy English.
+It is intentionally small: select text in another app, trigger Rewritr, and replace the selected text with a clearer version. Rewritr preserves meaning and avoids academic, thesis-style, overly formal, slangy, or filler-heavy English.
 
-## Usage
+## Download
 
-- Launch Rewritr. It runs as a menu bar app and does not show a Dock icon.
-- Open `Settings` from the menu bar item.
-- Configure an OpenAI-compatible Chat Completions provider:
-  - Base URL
-  - Model
-  - API key
-  - Request timeout
-  - Rewrite behavior: `Preview before replacing` or `Replace instantly`
-- Grant Accessibility permission when prompted. Rewritr needs it to automate copy and paste for selected text.
-- Select English text in another app and press `Control+Option+R`.
+Download the latest beta from [GitHub Releases](https://github.com/jameswei/rewritr/releases).
 
-In preview mode, Rewritr shows the rewritten text with `Replace`, `Copy`, `Retry`, and `Dismiss` actions. In instant mode, it replaces the selected text in place after the provider returns.
+The current release artifact is an unsigned macOS app zip. After unzipping:
+
+- Move `Rewritr.app` somewhere stable, such as `/Applications`.
+- Open Rewritr.
+- Grant Accessibility permission when prompted.
+- Configure your OpenAI-compatible provider in Settings.
+
+macOS grants Accessibility permission to the exact app bundle path. If you move the app after granting permission, you may need to grant permission again.
+
+## How It Works
+
+1. Select English text in any editable app.
+2. Press `Control+Option+R`.
+3. Rewritr copies the selected text with macOS automation.
+4. Rewritr sends it to your configured OpenAI-compatible Chat Completions provider.
+5. Rewritr either previews the rewrite or replaces the selected text instantly.
+
+Rewritr supports two rewrite behaviors:
+
+- `Preview before replacing`: show the rewrite first, then choose `Replace`, `Copy`, `Retry`, or `Dismiss`.
+- `Replace instantly`: replace the selected text as soon as the provider returns.
+
+The menu bar icon shows lightweight progress:
+
+- `hourglass`: rewriting or replacing
+- `checkmark.circle`: replaced successfully
+- `exclamationmark.triangle`: failed
 
 ## Privacy
 
 - Selected text is sent only to the provider you configure.
-- Rewritr has no backend service, accounts, analytics, or rewrite history in v1.
+- Rewritr has no backend service.
+- Rewritr has no accounts, analytics, or rewrite history in v1.
 - Non-sensitive settings are stored in UserDefaults.
 - The provider API key is stored locally in Keychain.
 - Clipboard automation temporarily uses the macOS pasteboard and restores previous clipboard contents where safe.
@@ -47,22 +65,26 @@ Rewritr works in most macOS apps and browser text fields that support normal cop
 
 ## Development
 
-- Open `Rewritr.xcodeproj` in Xcode.
-- Build the `Rewritr` scheme.
-- Run a local build:
+Open `Rewritr.xcodeproj` in Xcode and build the `Rewritr` scheme.
+
+Build locally:
 
 ```sh
 xcodebuild -project Rewritr.xcodeproj -scheme Rewritr -configuration Debug -destination 'platform=macOS' -derivedDataPath /tmp/rewritr-dev-derived build CODE_SIGNING_ALLOWED=NO
 ```
 
-- Run a test build:
+Build tests:
 
 ```sh
 xcodebuild -project Rewritr.xcodeproj -scheme Rewritr -configuration Debug -destination 'platform=macOS' -derivedDataPath /tmp/rewritr-dev-derived build-for-testing CODE_SIGNING_ALLOWED=NO
 ```
 
-- Run unit tests locally:
+Run tests:
 
 ```sh
 xcodebuild -project Rewritr.xcodeproj -scheme Rewritr -configuration Debug -destination 'platform=macOS' -derivedDataPath /tmp/rewritr-dev-derived test CODE_SIGNING_ALLOWED=NO
 ```
+
+## Release
+
+Releases are built by GitHub Actions when a `v*` tag is pushed, or manually through the `Release` workflow. The workflow packages `Rewritr.app` into a zip and attaches it to a GitHub Release with a SHA-256 checksum.

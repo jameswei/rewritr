@@ -60,14 +60,26 @@ jobs:
             ${{ runner.temp }}/rewritr-artifacts/Rewritr-${{ github.event.inputs.tag || github.ref_name }}.zip
             ${{ runner.temp }}/rewritr-artifacts/Rewritr-${{ github.event.inputs.tag || github.ref_name }}.zip.sha256
 
-      - name: Create GitHub release
+      - name: Create or update GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" \
-            "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip" \
-            "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip.sha256" \
-            --title "Rewritr ${RELEASE_TAG}" \
-            --notes "Unsigned macOS beta build. Download Rewritr-${RELEASE_TAG}.zip, unzip it, and grant Accessibility permission to the app bundle path." \
-            --verify-tag
+          RELEASE_NOTES="Unsigned macOS beta build. Download Rewritr-${RELEASE_TAG}.zip, unzip it, and grant Accessibility permission to the app bundle path."
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" \
+              --title "Rewritr ${RELEASE_TAG}" \
+              --notes "$RELEASE_NOTES"
+            gh release upload "$RELEASE_TAG" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip.sha256" \
+              --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip.sha256" \
+              --title "Rewritr ${RELEASE_TAG}" \
+              --notes "$RELEASE_NOTES" \
+              --verify-tag
+          fi
