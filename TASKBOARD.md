@@ -38,11 +38,11 @@ This board tracks implementation work for Rewritr v1. Keep it updated as each sl
 
 ## Milestone 3: Shortcut And Clipboard Loop
 
-- `[ ]` Register default global shortcut `Control+Option+R`.
-- `[ ]` Add explicit selected-text capture through clipboard automation.
-- `[ ]` Restore previous clipboard after capture.
-- `[ ]` Handle empty selection without model calls.
-- `[ ]` Implement repeated-trigger cancellation with latest trigger winning.
+- `[x]` Register default global shortcut `Control+Option+R`.
+- `[x]` Add explicit selected-text capture through clipboard automation.
+- `[x]` Restore previous clipboard after capture.
+- `[x]` Handle empty selection without model calls.
+- `[x]` Implement repeated-trigger cancellation with latest trigger winning.
 
 ## Milestone 4: Rewrite Core
 

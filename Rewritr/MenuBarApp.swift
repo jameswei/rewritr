@@ -6,9 +6,12 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private let windowPresenter = WindowPresenter()
+    private let rewriteCoordinator = RewriteCoordinator()
+    private var shortcutController: GlobalShortcutController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureStatusItem()
+        configureGlobalShortcut()
     }
 
     private func configureStatusItem() {
@@ -26,6 +29,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         item.menu = menu
         statusItem = item
+    }
+
+    private func configureGlobalShortcut() {
+        do {
+            let controller = GlobalShortcutController { [weak self] in
+                self?.rewriteCoordinator.triggerRewrite()
+            }
+            try controller.start()
+            shortcutController = controller
+        } catch {
+            NSLog("Rewritr global shortcut registration failed: \(error.localizedDescription)")
+        }
     }
 
     @objc private func showSettings() {

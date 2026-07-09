@@ -35,7 +35,7 @@ final class SettingsStore: ObservableObject {
         providerBaseURL = defaults.string(forKey: SettingsKey.providerBaseURL) ?? ""
         providerModel = defaults.string(forKey: SettingsKey.providerModel) ?? ""
         requestTimeoutSeconds = defaults.object(forKey: SettingsKey.requestTimeoutSeconds) as? Int ?? 20
-        globalShortcutLabel = defaults.string(forKey: SettingsKey.globalShortcutLabel) ?? "Control+Option+R"
+        globalShortcutLabel = defaults.string(forKey: SettingsKey.globalShortcutLabel) ?? GlobalShortcutController.defaultShortcutLabel
         let behaviorValue = defaults.string(forKey: SettingsKey.rewriteBehavior) ?? RewriteBehavior.previewBeforeReplacing.rawValue
         rewriteBehavior = RewriteBehavior(rawValue: behaviorValue) ?? .previewBeforeReplacing
         hasStoredAPIKey = (try? keychain.read(account: ProviderConfig.apiKeyKeychainID))?.isEmpty == false

@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 @testable import Rewritr
 
@@ -130,6 +131,20 @@ final class RewritrTests: XCTestCase {
         } catch let error as ProviderClientError {
             XCTAssertEqual(error.localizedDescription, "Provider responded, but returned Not OK instead of OK.")
         }
+    }
+
+    func testPasteboardSnapshotRestoresPreviousString() {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("RewritrTests.\(UUID().uuidString)"))
+        pasteboard.clearContents()
+        pasteboard.setString("original clipboard", forType: .string)
+
+        let snapshot = PasteboardSnapshot(pasteboard: pasteboard)
+        pasteboard.clearContents()
+        pasteboard.setString("temporary rewrite text", forType: .string)
+
+        snapshot.restore(to: pasteboard)
+
+        XCTAssertEqual(pasteboard.string(forType: .string), "original clipboard")
     }
 
     private func testConfig() -> ProviderConfig {

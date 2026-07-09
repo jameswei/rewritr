@@ -52,7 +52,7 @@ struct SettingsView: View {
             Section("Shortcut") {
                 TextField("Global shortcut", text: $store.globalShortcutLabel)
                     .textFieldStyle(.roundedBorder)
-                Text("Default: Control+Option+R")
+                Text("Default: \(GlobalShortcutController.defaultShortcutLabel)")
                     .foregroundStyle(.secondary)
             }
         }
@@ -87,4 +87,3 @@ struct SettingsView: View {
         }
     }
 }
-
