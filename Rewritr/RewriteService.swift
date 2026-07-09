@@ -90,6 +90,14 @@ struct RewritePromptBuilder: Sendable {
             Do not add new facts, claims, emotion, confidence, or intent.
             Keep roughly the same length unless clarity requires a small adjustment.
             Return only the refined text, with no labels, markdown, quotes, or explanation.
+
+            Examples:
+            Input: I am agree with this idea.
+            Output: I agree with this idea.
+            Input: Can you help to check this when you have time?
+            Output: Can you help check this when you have time?
+            Input: This solution is more better for our case.
+            Output: This solution is better for our case.
             """
         }
     }

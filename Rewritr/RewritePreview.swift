@@ -141,7 +141,10 @@ final class RewritePreviewPresenter {
 
     private func placeNearCursor(_ panel: NSPanel) {
         let mouseLocation = NSEvent.mouseLocation
-        let visibleFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
+        let screen = NSScreen.screens.first { screen in
+            screen.visibleFrame.contains(mouseLocation)
+        } ?? NSScreen.main
+        let visibleFrame = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
         let panelSize = panel.frame.size
         let x = min(max(mouseLocation.x, visibleFrame.minX), visibleFrame.maxX - panelSize.width)
         let y = min(max(mouseLocation.y, visibleFrame.minY + panelSize.height), visibleFrame.maxY)

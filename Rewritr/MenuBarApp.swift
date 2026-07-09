@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureStatusItem()
         configureGlobalShortcut()
+        showOnboardingIfNeeded()
     }
 
     private func configureStatusItem() {
@@ -70,6 +71,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
+    private func showOnboardingIfNeeded() {
+        guard !UserDefaults.standard.bool(forKey: SettingsKey.hasCompletedOnboarding) else {
+            return
+        }
+
+        windowPresenter.show(
+            title: "Welcome to Rewritr",
+            width: 660,
+            height: 680,
+            rootView: OnboardingView(
+                openSettings: { [weak self] in self?.showSettings() },
+                openPermissions: { [weak self] in self?.showPermissions() },
+                finish: { [weak self] in
+                    UserDefaults.standard.set(true, forKey: SettingsKey.hasCompletedOnboarding)
+                    self?.windowPresenter.close(title: "Welcome to Rewritr")
+                }
+            )
+        )
+    }
+
     @objc private func quit() {
         NSApp.terminate(nil)
     }
@@ -106,6 +127,12 @@ final class WindowPresenter {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
+
+    func close(title: String) {
+        windows[title]?.close()
+        windows.removeValue(forKey: title)
+        delegates.removeValue(forKey: title)
+    }
 }
 
 private final class WindowDelegate: NSObject, NSWindowDelegate {
@@ -132,7 +159,17 @@ struct PrivacyView: View {
             PrivacyRow(title: "No history", detail: "Rewritr does not store rewrite history in v1.")
             PrivacyRow(title: "API key", detail: "The API key will be stored locally in Keychain.")
             PrivacyRow(title: "Accessibility", detail: "Accessibility permission is needed for selected-text copy and paste automation.")
-            PrivacyRow(title: "Compatibility", detail: "Some secure fields, terminal sessions, remote desktops, and custom editors may not support reliable replacement.")
+            PrivacyRow(title: "Compatibility", detail: ProductCopy.compatibilitySummary)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Known limits")
+                    .fontWeight(.medium)
+                ForEach(ProductCopy.compatibilityRestrictions, id: \.self) { restriction in
+                    Text("- \(restriction)")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
 
             Spacer()
         }

@@ -121,6 +121,7 @@ enum SettingsKey {
     static let requestTimeoutSeconds = "requestTimeoutSeconds"
     static let globalShortcutLabel = "globalShortcutLabel"
     static let rewriteBehavior = "rewriteBehavior"
+    static let hasCompletedOnboarding = "hasCompletedOnboarding"
 }
 
 private struct SettingsValidationError: LocalizedError {

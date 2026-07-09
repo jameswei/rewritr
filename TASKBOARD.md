@@ -63,12 +63,12 @@ This board tracks implementation work for Rewritr v1. Keep it updated as each sl
 
 ## Milestone 6: Product Polish And Docs
 
-- `[ ]` Add first-run onboarding.
-- `[ ]` Add compatibility/restrictions copy before first use and in discoverable help/privacy surfaces.
-- `[ ]` Improve popover positioning and keyboard controls.
-- `[ ]` Tune prompt with real non-native English examples.
-- `[ ]` Expand README with usage, build, privacy, compatibility, and local development instructions.
-- `[ ]` Consider optional macOS Service / Quick Action after shortcut flow is stable.
+- `[x]` Add first-run onboarding.
+- `[x]` Add compatibility/restrictions copy before first use and in discoverable help/privacy surfaces.
+- `[x]` Improve popover positioning and keyboard controls.
+- `[x]` Tune prompt with real non-native English examples.
+- `[x]` Expand README with usage, build, privacy, compatibility, and local development instructions.
+- `[x]` Consider optional macOS Service / Quick Action after shortcut flow is stable; defer for v1 until the shortcut flow gets real usage.
 
 ## Verification Policy
 

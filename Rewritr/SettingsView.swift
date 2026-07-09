@@ -55,6 +55,17 @@ struct SettingsView: View {
                 Text("Default: \(GlobalShortcutController.defaultShortcutLabel)")
                     .foregroundStyle(.secondary)
             }
+
+            Section("Compatibility") {
+                Text(ProductCopy.compatibilitySummary)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(ProductCopy.compatibilityRestrictions, id: \.self) { restriction in
+                    Text("- \(restriction)")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
         .formStyle(.grouped)
         .padding(24)
