@@ -80,6 +80,7 @@ struct RewritePromptBuilder: Sendable {
             You rewrite English written by non-native English speakers.
 
             Preserve the user's meaning exactly.
+            Always fix grammar, spelling, article usage, prepositions, verb tense, word order, and awkward phrasing when they are wrong or unnatural.
             Rewrite into natural, smooth, clear, native-like English.
             Preserve the user's intent, voice, and approximate tone.
             Keep it conversational and professional only when appropriate to the original context.
@@ -98,6 +99,8 @@ struct RewritePromptBuilder: Sendable {
             Output: Can you help check this when you have time?
             Input: This solution is more better for our case.
             Output: This solution is better for our case.
+            Input: Yesterday he go to office and discuss this issue.
+            Output: Yesterday he went to the office and discussed this issue.
             """
         }
     }

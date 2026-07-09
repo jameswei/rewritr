@@ -17,13 +17,18 @@ enum ProviderClientError: LocalizedError, Sendable {
         case .providerError(let statusCode, let message):
             "Provider error \(statusCode): \(message)"
         case .emptyResponse:
-            "Provider returned an empty response."
+            "Provider returned no text content."
         case .malformedResponse:
             "Provider returned a response Rewritr could not read."
         case .unexpectedTestResponse(let value):
             "Provider responded, but returned \(value) instead of OK."
         }
     }
+}
+
+enum ProviderConnectionTestResult: Equatable, Sendable {
+    case textResponse
+    case emptyTextResponse
 }
 
 struct ProviderClient: Sendable {
@@ -37,21 +42,30 @@ struct ProviderClient: Sendable {
         self.transport = transport
     }
 
-    func testConnection(config: ProviderConfig, apiKey: String) async throws {
-        let response = try await chatCompletion(
-            config: config,
-            apiKey: apiKey,
-            messages: [
-                ChatMessage(role: "system", content: "Return exactly OK and nothing else."),
-                ChatMessage(role: "user", content: "OK")
-            ],
-            maxTokens: 4
-        )
+    func testConnection(config: ProviderConfig, apiKey: String) async throws -> ProviderConnectionTestResult {
+        let response: String
+        do {
+            response = try await chatCompletion(
+                config: config,
+                apiKey: apiKey,
+                messages: [
+                    ChatMessage(role: "system", content: "Reply with only the word OK."),
+                    ChatMessage(role: "user", content: "Connection test")
+                ],
+                maxTokens: 8
+            )
+        } catch ProviderClientError.emptyResponse {
+            return .emptyTextResponse
+        }
 
-        let trimmed = response.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed == "OK" else {
+        let trimmed = response
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "\"'`"))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.lowercased() == "ok" || trimmed.lowercased() == "ok." else {
             throw ProviderClientError.unexpectedTestResponse(trimmed)
         }
+        return .textResponse
     }
 
     func chatCompletion(

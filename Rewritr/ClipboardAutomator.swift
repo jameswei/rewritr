@@ -9,6 +9,7 @@ enum ClipboardAutomationError: LocalizedError, Sendable {
     case pasteTimedOut
     case emptySelection
     case unableToCreateKeyboardEvent
+    case clipboardWriteFailed
 
     var errorDescription: String? {
         switch self {
@@ -22,6 +23,8 @@ enum ClipboardAutomationError: LocalizedError, Sendable {
             "Select text before triggering rewrite."
         case .unableToCreateKeyboardEvent:
             "Rewritr could not create a keyboard automation event."
+        case .clipboardWriteFailed:
+            "Rewritr could not write text to the clipboard."
         }
     }
 }
@@ -30,6 +33,7 @@ struct SelectedTextCapture: Equatable, Sendable {
     let text: String
     let sourceBundleIdentifier: String?
     let sourceProcessIdentifier: pid_t?
+    let selectionBounds: CGRect?
 }
 
 struct PasteboardSnapshot {
@@ -71,7 +75,7 @@ final class ClipboardAutomator {
         pasteboard: NSPasteboard = .general,
         eventPoster: KeyboardEventPosting = CGKeyboardEventPoster(),
         copyTimeout: TimeInterval = 0.8,
-        pasteRestoreDelayNanoseconds: UInt64 = 150_000_000
+        pasteRestoreDelayNanoseconds: UInt64 = 700_000_000
     ) {
         self.pasteboard = pasteboard
         self.eventPoster = eventPoster
@@ -85,6 +89,7 @@ final class ClipboardAutomator {
         }
 
         let sourceApp = NSWorkspace.shared.frontmostApplication
+        let selectionBounds = selectedTextBounds(for: sourceApp)
         let snapshot = PasteboardSnapshot(pasteboard: pasteboard)
         defer {
             snapshot.restore(to: pasteboard)
@@ -105,7 +110,8 @@ final class ClipboardAutomator {
         return SelectedTextCapture(
             text: text,
             sourceBundleIdentifier: sourceApp?.bundleIdentifier,
-            sourceProcessIdentifier: sourceApp?.processIdentifier
+            sourceProcessIdentifier: sourceApp?.processIdentifier,
+            selectionBounds: selectionBounds
         )
     }
 
@@ -115,8 +121,9 @@ final class ClipboardAutomator {
         }
 
         let snapshot = PasteboardSnapshot(pasteboard: pasteboard)
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+        guard writeText(text, to: pasteboard) else {
+            throw ClipboardAutomationError.clipboardWriteFailed
+        }
 
         do {
             try eventPoster.postCommandKey(virtualKey: CGKeyCode(kVK_ANSI_V))
@@ -128,9 +135,13 @@ final class ClipboardAutomator {
         }
     }
 
-    func copyTextToClipboard(_ text: String) {
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+    @discardableResult
+    func copyTextToClipboard(_ text: String) -> Bool {
+        writeText(text, to: pasteboard)
+    }
+
+    func currentClipboardText() -> String? {
+        pasteboard.string(forType: .string)
     }
 
     private func waitForPasteboardChange(after changeCount: Int, timeout: TimeInterval) async throws -> Bool {
@@ -143,6 +154,76 @@ final class ClipboardAutomator {
             try await Task.sleep(nanoseconds: 20_000_000)
         }
         return false
+    }
+
+    private func writeText(_ text: String, to pasteboard: NSPasteboard) -> Bool {
+        pasteboard.declareTypes([.string], owner: nil)
+        let wrote = pasteboard.setString(text, forType: .string)
+        return wrote && pasteboard.string(forType: .string) == text
+    }
+
+    private func selectedTextBounds(for app: NSRunningApplication?) -> CGRect? {
+        guard let processIdentifier = app?.processIdentifier else {
+            return nil
+        }
+
+        let appElement = AXUIElementCreateApplication(processIdentifier)
+        var focusedValue: CFTypeRef?
+        let focusedResult = AXUIElementCopyAttributeValue(
+            appElement,
+            "AXFocusedUIElement" as CFString,
+            &focusedValue
+        )
+        guard
+            focusedResult == .success,
+            let focusedElement = focusedValue
+        else {
+            return nil
+        }
+
+        var selectedRangeValue: CFTypeRef?
+        let rangeResult = AXUIElementCopyAttributeValue(
+            focusedElement as! AXUIElement,
+            "AXSelectedTextRange" as CFString,
+            &selectedRangeValue
+        )
+        guard
+            rangeResult == .success,
+            let selectedRangeValue,
+            CFGetTypeID(selectedRangeValue) == AXValueGetTypeID(),
+            AXValueGetType(selectedRangeValue as! AXValue) == .cfRange
+        else {
+            return nil
+        }
+
+        let rangeAXValue = selectedRangeValue as! AXValue
+        var selectedRange = CFRange()
+        guard AXValueGetValue(rangeAXValue, .cfRange, &selectedRange), selectedRange.length > 0 else {
+            return nil
+        }
+
+        var boundsValue: CFTypeRef?
+        let boundsResult = AXUIElementCopyParameterizedAttributeValue(
+            focusedElement as! AXUIElement,
+            "AXBoundsForRange" as CFString,
+            rangeAXValue,
+            &boundsValue
+        )
+        guard
+            boundsResult == .success,
+            let boundsValue,
+            CFGetTypeID(boundsValue) == AXValueGetTypeID(),
+            AXValueGetType(boundsValue as! AXValue) == .cgRect
+        else {
+            return nil
+        }
+
+        let boundsAXValue = boundsValue as! AXValue
+        var bounds = CGRect.zero
+        guard AXValueGetValue(boundsAXValue, .cgRect, &bounds), !bounds.isNull, !bounds.isEmpty else {
+            return nil
+        }
+        return bounds
     }
 }
 

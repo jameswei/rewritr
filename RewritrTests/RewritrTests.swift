@@ -126,11 +126,39 @@ final class RewritrTests: XCTestCase {
         }
 
         do {
-            try await client.testConnection(config: testConfig(), apiKey: "test-key")
+            _ = try await client.testConnection(config: testConfig(), apiKey: "test-key")
             XCTFail("Expected unexpected test response error.")
         } catch let error as ProviderClientError {
             XCTAssertEqual(error.localizedDescription, "Provider responded, but returned Not OK instead of OK.")
         }
+    }
+
+    func testProviderTestAcceptsEmptyTextAsReachableProvider() async throws {
+        let client = ProviderClient { request in
+            let data = Data("""
+            {
+              "choices": [
+                {
+                  "message": {
+                    "role": "assistant",
+                    "content": ""
+                  }
+                }
+              ]
+            }
+            """.utf8)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: try XCTUnwrap(request.url),
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            ))
+            return (data, response)
+        }
+
+        let result = try await client.testConnection(config: testConfig(), apiKey: "test-key")
+
+        XCTAssertEqual(result, .emptyTextResponse)
     }
 
     func testProviderClientSurfacesMalformedResponse() async throws {
@@ -169,6 +197,8 @@ final class RewritrTests: XCTestCase {
         XCTAssertEqual(messages.count, 2)
         let systemPrompt = try XCTUnwrap(messages.first?.content)
         XCTAssertTrue(systemPrompt.contains("natural, smooth, clear, native-like English"))
+        XCTAssertTrue(systemPrompt.contains("Always fix grammar"))
+        XCTAssertTrue(systemPrompt.contains("verb tense"))
         XCTAssertTrue(systemPrompt.contains("Avoid academic, thesis-style"))
         XCTAssertTrue(systemPrompt.contains("Return only the refined text"))
         XCTAssertTrue(try XCTUnwrap(messages.last?.content).contains("I am agree with this idea."))
@@ -241,6 +271,20 @@ final class RewritrTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testSettingsStorePersistsRewriteBehaviorImmediately() {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try! XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = SettingsStore(defaults: defaults)
+
+        store.rewriteBehavior = .replaceInstantly
+        store.saveRewriteBehavior()
+
+        XCTAssertEqual(defaults.string(forKey: SettingsKey.rewriteBehavior), RewriteBehavior.replaceInstantly.rawValue)
+        XCTAssertEqual(SettingsStore(defaults: defaults).rewriteBehavior, .replaceInstantly)
+    }
+
     func testPasteboardSnapshotRestoresPreviousString() {
         let pasteboard = NSPasteboard(name: NSPasteboard.Name("RewritrTests.\(UUID().uuidString)"))
         pasteboard.clearContents()
@@ -253,6 +297,40 @@ final class RewritrTests: XCTestCase {
         snapshot.restore(to: pasteboard)
 
         XCTAssertEqual(pasteboard.string(forType: .string), "original clipboard")
+    }
+
+    @MainActor
+    func testCopyTextToClipboardWritesPlainString() {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("RewritrTests.\(UUID().uuidString)"))
+        let automator = ClipboardAutomator(pasteboard: pasteboard)
+
+        let copied = automator.copyTextToClipboard("rewritten text")
+
+        XCTAssertTrue(copied)
+        XCTAssertEqual(pasteboard.string(forType: .string), "rewritten text")
+    }
+
+    @MainActor
+    func testRewritePreviewModelUpdatesActionsWithState() {
+        var copiedValue = "initial"
+        let loadingActions = RewritePreviewActions(
+            replace: {},
+            copy: { copiedValue = "loading" },
+            retry: {},
+            dismiss: {}
+        )
+        let resultActions = RewritePreviewActions(
+            replace: {},
+            copy: { copiedValue = "result" },
+            retry: {},
+            dismiss: {}
+        )
+        let model = RewritePreviewModel(state: .loading, actions: loadingActions)
+
+        model.update(state: .result(text: "rewritten text", isCopied: false), actions: resultActions)
+        model.actions.copy()
+
+        XCTAssertEqual(copiedValue, "result")
     }
 
     private func testConfig() -> ProviderConfig {

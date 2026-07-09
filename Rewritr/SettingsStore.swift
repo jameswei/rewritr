@@ -5,7 +5,8 @@ final class SettingsStore: ObservableObject {
     enum TestState: Equatable {
         case idle
         case testing
-        case success
+        case success(String)
+        case warning(String)
         case failure(String)
     }
 
@@ -42,7 +43,7 @@ final class SettingsStore: ObservableObject {
     }
 
     var apiKeyPlaceholder: String {
-        hasStoredAPIKey ? "Stored in Keychain. Enter a new key to replace it." : "API key"
+        hasStoredAPIKey ? "Enter a new API key to replace the stored key" : "API key"
     }
 
     var canTestProvider: Bool {
@@ -71,6 +72,11 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    func saveRewriteBehavior() {
+        defaults.set(rewriteBehavior.rawValue, forKey: SettingsKey.rewriteBehavior)
+        saveMessage = "Rewrite behavior saved."
+    }
+
     func testProvider() async {
         save()
         testState = .testing
@@ -78,8 +84,13 @@ final class SettingsStore: ObservableObject {
         do {
             let config = try currentProviderConfig()
             let apiKey = try currentAPIKey()
-            try await client.testConnection(config: config, apiKey: apiKey)
-            testState = .success
+            let result = try await client.testConnection(config: config, apiKey: apiKey)
+            switch result {
+            case .textResponse:
+                testState = .success("Provider test succeeded. Base URL, model, and API key are working.")
+            case .emptyTextResponse:
+                testState = .warning("Provider accepted the request, but returned no text content. Base URL, model, and API key look valid; this model/provider may not support the test prompt through Chat Completions.")
+            }
         } catch {
             testState = .failure(error.localizedDescription)
         }

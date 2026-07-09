@@ -8,17 +8,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let windowPresenter = WindowPresenter()
     private let rewriteCoordinator = RewriteCoordinator()
     private var shortcutController: GlobalShortcutController?
+    private var statusResetTask: Task<Void, Never>?
+    private static let defaultMenuBarSymbolName = "pencil.line"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureStatusItem()
+        configureRewriteActivityIndicator()
         configureGlobalShortcut()
         showOnboardingIfNeeded()
     }
 
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.title = "R"
-        item.button?.toolTip = "Rewritr"
+        statusItem = item
+        setStatusItem(symbolName: Self.defaultMenuBarSymbolName, toolTip: "Rewritr")
 
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(showSettings), keyEquivalent: ","))
@@ -29,7 +32,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.items.forEach { $0.target = self }
 
         item.menu = menu
-        statusItem = item
+    }
+
+    private func configureRewriteActivityIndicator() {
+        rewriteCoordinator.activityHandler = { [weak self] state in
+            self?.updateStatusItem(for: state)
+        }
+    }
+
+    private func updateStatusItem(for state: RewriteActivityState) {
+        statusResetTask?.cancel()
+
+        switch state {
+        case .idle:
+            setStatusItem(symbolName: Self.defaultMenuBarSymbolName, toolTip: "Rewritr")
+        case .working(let message):
+            setStatusItem(symbolName: "hourglass", toolTip: message)
+        case .succeeded(let message):
+            setStatusItem(symbolName: "checkmark.circle", toolTip: message)
+            resetStatusItem(afterNanoseconds: 1_200_000_000)
+        case .failed(let message):
+            setStatusItem(symbolName: "exclamationmark.triangle", toolTip: message)
+            resetStatusItem(afterNanoseconds: 2_000_000_000)
+        }
+    }
+
+    private func setStatusItem(symbolName: String, toolTip: String) {
+        guard let button = statusItem?.button else {
+            return
+        }
+
+        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: toolTip)
+            ?? NSImage(systemSymbolName: Self.defaultMenuBarSymbolName, accessibilityDescription: toolTip)
+        image?.isTemplate = true
+        button.title = ""
+        button.image = image
+        button.toolTip = toolTip
+    }
+
+    private func resetStatusItem(afterNanoseconds delay: UInt64) {
+        statusResetTask = Task { [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: delay)
+            } catch {
+                return
+            }
+            await MainActor.run {
+                guard let self else { return }
+                self.setStatusItem(symbolName: Self.defaultMenuBarSymbolName, toolTip: "Rewritr")
+            }
+        }
     }
 
     private func configureGlobalShortcut() {
@@ -209,9 +261,17 @@ struct PermissionView: View {
             Text("Rewritr needs Accessibility permission to copy selected text and paste rewritten text back into the active app.")
                 .foregroundStyle(.secondary)
 
+            Text("macOS grants Accessibility permission to the exact app bundle path. This debug build is running from \(Bundle.main.bundlePath), so System Settings may show that temporary copy instead of a normal installed app.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
             HStack {
                 Button("Refresh Status") {
                     isTrusted = AXIsProcessTrusted()
+                }
+
+                Button("Request Permission") {
+                    requestAccessibilityPermission()
                 }
 
                 Button("Open System Settings") {
@@ -222,6 +282,13 @@ struct PermissionView: View {
             Spacer()
         }
         .padding(24)
+    }
+
+    private func requestAccessibilityPermission() {
+        let options = [
+            "AXTrustedCheckOptionPrompt": true
+        ] as CFDictionary
+        isTrusted = AXIsProcessTrustedWithOptions(options)
     }
 
     private func openAccessibilitySettings() {
