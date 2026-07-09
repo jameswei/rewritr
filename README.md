@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/jameswei/rewritr/actions/workflows/ci.yml/badge.svg)](https://github.com/jameswei/rewritr/actions/workflows/ci.yml)
 
-**Project site:** https://jameswei.github.io/rewritr/
+**Project site:** http://lifeplayer.space/rewritr/
 
 Rewritr is a native macOS menu bar app for non-native English speakers who want to rewrite selected English into smoother, more natural, native-like English.
 
