@@ -3,25 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Rewritr - Native-like English, right where you write</title>
+    <title>Rewritr - Private English rewriting for macOS</title>
     <meta
       name="description"
-      content="Rewritr is a native macOS menu bar app that rewrites selected English into smoother, more natural, native-like English."
+      content="Rewritr is a privacy-first, open-source macOS menu bar app that rewrites selected English into smoother, more natural, native-like English."
     />
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="assets/app-icon.png" type="image/png" />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
     <header class="site-header">
       <nav class="nav" aria-label="Main navigation">
         <a class="brand" href="#top" aria-label="Rewritr home">
-          <img class="brand-mark" src="assets/app-icon.svg" alt="" />
+          <img class="brand-mark" src="assets/app-icon.png" alt="" />
           <span>Rewritr</span>
         </a>
         <div class="nav-links">
-          <a href="#about">About</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#workflow">Workflow</a>
           <a href="#screenshots">Screenshots</a>
-          <a href="#capabilities">Features</a>
           <a href="https://github.com/jameswei/rewritr" class="nav-button">GitHub</a>
         </div>
       </nav>
@@ -29,200 +29,204 @@
 
     <main id="top">
       <section class="hero" aria-labelledby="hero-title">
-        <img
-          class="hero-image"
-          src="assets/screenshot_settings.png"
-          alt="Rewritr settings window"
-        />
-        <div class="hero-shade" aria-hidden="true"></div>
-        <div class="hero-content">
-          <p class="eyebrow">macOS menu bar writing assistant</p>
-          <h1 id="hero-title">Rewritr</h1>
-          <p class="hero-copy">
-            Rewrite selected English into smoother, more natural, native-like wording without making it
-            academic, overly formal, slangy, or filler-heavy.
-          </p>
-          <div class="hero-actions" aria-label="Primary actions">
-            <a class="button primary" href="https://github.com/jameswei/rewritr/releases">Download beta</a>
-            <a class="button secondary" href="#about">Learn more</a>
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Native macOS writing assistant</p>
+            <h1 id="hero-title">
+              <span class="title-part">Private,</span>
+              <span class="title-part">open-source</span>
+              <span class="title-part">English rewriting.</span>
+            </h1>
+            <p class="hero-lede">
+              <span class="mobile-line">Rewritr helps non-native English speakers</span>
+              <span class="mobile-line">turn selected text into smoother,</span>
+              <span class="mobile-line">more natural, native-like English,</span>
+              <span class="mobile-line">right where they write.</span>
+            </p>
+            <p class="hero-note">
+              <span class="mobile-line">No hosted Rewritr account.</span>
+              <span class="mobile-line">No rewrite history. No analytics.</span>
+              <span class="mobile-line">Bring your own OpenAI-compatible provider,</span>
+              <span class="mobile-line">or point it at a local model.</span>
+            </p>
+            <div class="hero-actions" aria-label="Primary actions">
+              <a class="button primary" href="https://github.com/jameswei/rewritr/releases">Download for macOS</a>
+              <a class="button secondary" href="https://github.com/jameswei/rewritr">View source</a>
+            </div>
+          </div>
+          <div class="hero-panel" aria-label="Rewritr value summary">
+            <img class="hero-icon" src="assets/app-icon.png" alt="Rewritr app icon" />
+            <div class="rewrite-demo">
+              <span class="demo-label">Selected text</span>
+              <p>I want make this sentence more natural for daily work.</p>
+              <span class="demo-arrow" aria-hidden="true">Rewritten</span>
+              <p class="demo-result">I want to make this sentence sound more natural for everyday work.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="section about-section" id="about" aria-labelledby="about-title">
-        <div class="container two-column">
+      <section class="section trust-section" id="privacy" aria-labelledby="privacy-title">
+        <div class="container section-heading compact">
+          <p class="eyebrow">Privacy first</p>
+          <h2 id="privacy-title">Your text stays under your control.</h2>
+          <p>
+            Rewritr is intentionally small. It does not run a backend, collect analytics,
+            store rewrite history, or ask you to create an account.
+          </p>
+        </div>
+        <div class="container value-grid">
+          <article class="value-card highlight">
+            <span>No Rewritr backend</span>
+            <h3>Only selected text is sent</h3>
+            <p>
+              The app sends the text you explicitly select only to the provider endpoint
+              you configure.
+            </p>
+          </article>
+          <article class="value-card">
+            <span>Bring your own key</span>
+            <h3>You choose the provider</h3>
+            <p>
+              Use an OpenAI-compatible cloud endpoint, or use a local model when you want
+              data to stay inside your own machine or network.
+            </p>
+          </article>
+          <article class="value-card">
+            <span>macOS Keychain</span>
+            <h3>API keys stay on this Mac</h3>
+            <p>
+              Provider keys are stored in Keychain. Non-sensitive settings stay in local
+              app preferences.
+            </p>
+          </article>
+          <article class="value-card">
+            <span>Open source</span>
+            <h3>Inspect what it does</h3>
+            <p>
+              Rewritr is free and open source, so the trust model is visible instead of
+              hidden behind a hosted writing service.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section muted" id="workflow" aria-labelledby="workflow-title">
+        <div class="container split-layout">
           <div>
-            <p class="eyebrow">Why it exists</p>
-            <h2 id="about-title">English that sounds closer to what you meant.</h2>
+            <p class="eyebrow">Purpose</p>
+            <h2 id="workflow-title">Better everyday English, not a new writing platform.</h2>
           </div>
           <div class="section-copy">
             <p>
-              Rewritr is built for non-native English speakers who already know what they want to say,
-              but want the final sentence to read more naturally.
+              Rewritr is for people who already know what they want to say, but want the
+              final English to feel smoother and more natural.
             </p>
             <p>
-              Select text in any editable macOS app, trigger Rewritr, and let your configured
-              OpenAI-compatible provider rewrite it. Preview the result first, or replace it instantly
-              when you want the fastest flow.
+              It is not trying to be a document editor, AI content generator, academic
+              writing suite, browser extension, or subscription writing account.
             </p>
-            <a class="text-link" href="https://github.com/jameswei/rewritr">Explore the source on GitHub</a>
           </div>
         </div>
+        <div class="container step-grid" aria-label="Rewrite flow">
+          <article class="step-card">
+            <span>01</span>
+            <h3>Select text</h3>
+            <p>Highlight the sentence or paragraph you want to improve in the app you are already using.</p>
+          </article>
+          <article class="step-card">
+            <span>02</span>
+            <h3>Trigger Rewritr</h3>
+            <p>Use the global shortcut from the macOS menu bar app. Rewritr copies the selection through normal macOS automation.</p>
+          </article>
+          <article class="step-card">
+            <span>03</span>
+            <h3>Preview or replace</h3>
+            <p>Review the rewrite first, or use instant replacement when you want the fastest flow.</p>
+          </article>
+        </div>
+      </section>
 
-        <div class="container stats-grid" aria-label="Project highlights">
-          <div class="stat">
-            <strong>2</strong>
-            <span>rewrite modes</span>
-          </div>
-          <div class="stat">
-            <strong>1</strong>
-            <span>global shortcut</span>
-          </div>
-          <div class="stat">
-            <strong>0</strong>
-            <span>backend services</span>
-          </div>
-          <div class="stat">
-            <strong>Keychain</strong>
-            <span>optional API key</span>
-          </div>
+      <section class="section" id="different" aria-labelledby="different-title">
+        <div class="container section-heading">
+          <p class="eyebrow">Different by design</p>
+          <h2 id="different-title">A narrower tool with fewer hidden tradeoffs.</h2>
+        </div>
+        <div class="container difference-grid">
+          <article>
+            <h3>Not browser-bound</h3>
+            <p>Works across normal macOS apps and browser text fields that support standard copy and paste.</p>
+          </article>
+          <article>
+            <h3>Not account-centric</h3>
+            <p>No Rewritr login, hosted workspace, usage dashboard, or server-side rewrite history.</p>
+          </article>
+          <article>
+            <h3>Not a paywalled AI suite</h3>
+            <p>The app focuses on one job: rewrite selected English naturally using a provider you control.</p>
+          </article>
+          <article>
+            <h3>Not over-formal</h3>
+            <p>The default rewrite aims for clear, native-like everyday English, not academic or thesis-style prose.</p>
+          </article>
         </div>
       </section>
 
       <section class="section muted" id="screenshots" aria-labelledby="screenshots-title">
         <div class="container section-heading">
           <p class="eyebrow">Screenshots</p>
-          <h2 id="screenshots-title">Small setup, direct workflow.</h2>
+          <h2 id="screenshots-title">Setup should feel understandable, not mysterious.</h2>
         </div>
-        <div class="container screenshot-grid">
-          <figure class="screenshot wide">
-            <img src="assets/screenshot_settings.png" alt="Rewritr settings with provider configuration" />
-            <figcaption>Configure your provider and choose preview or instant replacement.</figcaption>
+        <div class="container screenshot-showcase">
+          <figure class="screenshot primary-shot">
+            <div class="shot-copy">
+              <span>Provider and behavior</span>
+              <h3>You decide where rewriting happens.</h3>
+              <p>Configure a full OpenAI-compatible endpoint, model, optional API key, rewrite mode, and shortcut in one place.</p>
+            </div>
+            <img src="assets/screenshot_settings.png" alt="Rewritr settings with provider configuration and rewrite behavior" />
           </figure>
-          <figure class="screenshot">
-            <img src="assets/screenshot_permissions.png" alt="Rewritr permission setup screen" />
-            <figcaption>Grant Accessibility permission so Rewritr can copy and replace selected text.</figcaption>
-          </figure>
-          <figure class="screenshot">
-            <img src="assets/screenshot_privacy.png" alt="macOS Accessibility permission screen" />
-            <figcaption>macOS grants permission to the exact app bundle path you run.</figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <section class="section" id="flow" aria-labelledby="flow-title">
-        <div class="container section-heading">
-          <p class="eyebrow">Flow</p>
-          <h2 id="flow-title">Select, rewrite, replace.</h2>
-        </div>
-        <div class="container flow-grid" aria-label="Rewrite flow">
-          <div class="flow-step">
-            <span>01</span>
-            <h3>Select text</h3>
-            <p>Highlight the English sentence or paragraph you want to improve.</p>
-          </div>
-          <div class="flow-step">
-            <span>02</span>
-            <h3>Press Control+Option+R</h3>
-            <p>Rewritr copies the selected text through normal macOS automation.</p>
-          </div>
-          <div class="flow-step">
-            <span>03</span>
-            <h3>Apply the rewrite</h3>
-            <p>Preview the result first, or let Rewritr replace the selection instantly.</p>
+          <div class="supporting-shots">
+            <figure class="screenshot compact-shot">
+              <img src="assets/screenshot_permissions.png" alt="Rewritr permission setup screen with Accessibility permission status" />
+              <figcaption>
+                <strong>Permissions are explained</strong>
+                Rewritr tells users why Accessibility is needed before macOS asks for it.
+              </figcaption>
+            </figure>
+            <figure class="screenshot compact-shot">
+              <img src="assets/screenshot_privacy.png" alt="Rewritr privacy page showing local storage and provider transparency" />
+              <figcaption>
+                <strong>Privacy is visible</strong>
+                The app states what stays local, what is sent, and what it does not collect.
+              </figcaption>
+            </figure>
           </div>
         </div>
       </section>
 
-      <section class="section muted" id="capabilities" aria-labelledby="capabilities-title">
-        <div class="container section-heading">
-          <p class="eyebrow">Capabilities</p>
-          <h2 id="capabilities-title">Focused on a narrow, useful v1.</h2>
-        </div>
-        <div class="container card-grid">
-          <article class="card">
-            <h3>Natural English rewriting</h3>
-            <p>Preserves meaning while making selected English smoother and more native-like.</p>
-          </article>
-          <article class="card">
-            <h3>Preview or instant replace</h3>
-            <p>Choose a confirmation popup or a faster in-place replacement workflow.</p>
-          </article>
-          <article class="card">
-            <h3>Provider you control</h3>
-            <p>Use your own OpenAI-compatible Chat Completions endpoint, model, and optional API key.</p>
-          </article>
-          <article class="card">
-            <h3>No account or backend</h3>
-            <p>The app runs locally and sends selected text only to the provider you configure.</p>
-          </article>
-          <article class="card">
-            <h3>macOS-native storage</h3>
-            <p>API keys, when needed, live in Keychain. Non-sensitive settings live in UserDefaults.</p>
-          </article>
-          <article class="card">
-            <h3>Clear compatibility limits</h3>
-            <p>Works best in apps with normal copy and paste; secure fields and terminals are limited.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="section" id="stack" aria-labelledby="stack-title">
-        <div class="container stack-layout">
+      <section class="section limits" id="limits" aria-labelledby="limits-title">
+        <div class="container split-layout">
           <div>
-            <p class="eyebrow">Stack</p>
-            <h2 id="stack-title">Native macOS, small surface area.</h2>
+            <p class="eyebrow">Compatibility</p>
+            <h2 id="limits-title">Works best with normal editable text.</h2>
           </div>
-          <dl class="stack-list">
-            <div>
-              <dt>App</dt>
-              <dd>Swift, SwiftUI, AppKit, menu bar app</dd>
-            </div>
-            <div>
-              <dt>Automation</dt>
-              <dd>Accessibility permission, pasteboard, global shortcut</dd>
-            </div>
-            <div>
-              <dt>Provider</dt>
-              <dd>OpenAI-compatible Chat Completions API</dd>
-            </div>
-            <div>
-              <dt>Storage</dt>
-              <dd>Keychain for optional API key, UserDefaults for settings</dd>
-            </div>
-            <div>
-              <dt>Build</dt>
-              <dd>Xcode project, GitHub Actions CI and release packaging</dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-
-      <section class="section muted" id="usage" aria-labelledby="usage-title">
-        <div class="container usage-layout">
-          <div>
-            <p class="eyebrow">Use it</p>
-            <h2 id="usage-title">A shortcut-first writing loop.</h2>
-            <p class="section-copy">
-              Rewritr stays out of the way until you select text and trigger it.
-            </p>
-          </div>
-          <div class="terminal" role="img" aria-label="Rewritr usage flow">
-            <span>Select English text</span>
-            <span>Press Control+Option+R</span>
-            <span>Review the rewrite or replace instantly</span>
-            <span>Keep writing in the original app</span>
+          <div class="limit-list">
+            <p>Rewritr works best in apps and browser fields that support standard selection, Command-C, and Command-V.</p>
+            <p>Secure fields, terminals, remote desktops, virtual machines, browser-based IDEs, and apps with unusual focus handling may be limited.</p>
           </div>
         </div>
       </section>
 
       <section class="cta" aria-labelledby="cta-title">
         <div class="container cta-inner">
-          <p class="eyebrow">Open source beta</p>
-          <h2 id="cta-title">Try Rewritr or inspect the source.</h2>
+          <div>
+            <p class="eyebrow">Free and open source</p>
+            <h2 id="cta-title">Try Rewritr, or inspect the source first.</h2>
+          </div>
           <div class="hero-actions">
-            <a class="button primary" href="https://github.com/jameswei/rewritr/releases">Download beta</a>
-            <a class="button secondary" href="https://github.com/jameswei/rewritr">View on GitHub</a>
+            <a class="button primary" href="https://github.com/jameswei/rewritr/releases">Download for macOS</a>
+            <a class="button secondary dark" href="https://github.com/jameswei/rewritr">View on GitHub</a>
           </div>
         </div>
       </section>
