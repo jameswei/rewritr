@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 - 2026-07-11
+
+### Fixed
+
+- Fixed the packaged macOS app bundle icon so Finder, app switcher, and installed builds use the approved Rewritr icon.
+
 ## 1.0.0 - 2026-07-10
 
 ### Added
