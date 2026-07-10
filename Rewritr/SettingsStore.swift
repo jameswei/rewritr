@@ -14,15 +14,17 @@ final class SettingsStore: ObservableObject {
     @Published var providerModel: String
     @Published var apiKeyInput: String = ""
     @Published var requestTimeoutSeconds: Int
-    @Published var globalShortcutLabel: String
     @Published var rewriteBehavior: RewriteBehavior
+    @Published var shortcut: ShortcutConfiguration
     @Published private(set) var hasStoredAPIKey: Bool
     @Published private(set) var testState: TestState = .idle
     @Published private(set) var saveMessage: String?
+    @Published private(set) var shortcutMessage: String?
 
     private let defaults: UserDefaults
     private let keychain: KeychainStore
     private let client: ProviderClient
+    private var isReadyForAutosave = false
 
     init(
         defaults: UserDefaults = .standard,
@@ -36,61 +38,121 @@ final class SettingsStore: ObservableObject {
         providerBaseURL = defaults.string(forKey: SettingsKey.providerBaseURL) ?? ""
         providerModel = defaults.string(forKey: SettingsKey.providerModel) ?? ""
         requestTimeoutSeconds = defaults.object(forKey: SettingsKey.requestTimeoutSeconds) as? Int ?? 20
-        globalShortcutLabel = defaults.string(forKey: SettingsKey.globalShortcutLabel) ?? GlobalShortcutController.defaultShortcutLabel
         let behaviorValue = defaults.string(forKey: SettingsKey.rewriteBehavior) ?? RewriteBehavior.previewBeforeReplacing.rawValue
         rewriteBehavior = RewriteBehavior(rawValue: behaviorValue) ?? .previewBeforeReplacing
+        shortcut = ShortcutConfiguration.load(from: defaults)
         hasStoredAPIKey = (try? keychain.read(account: ProviderConfig.apiKeyKeychainID))?.isEmpty == false
+        isReadyForAutosave = true
+
+        NotificationCenter.default.addObserver(
+            forName: .rewritrShortcutRegistrationFailed,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self else { return }
+            let shortcut = notification.userInfo?["shortcut"] as? ShortcutConfiguration
+            let message = notification.userInfo?["message"] as? String
+            Task { @MainActor in
+                if let shortcut {
+                    self.shortcut = shortcut
+                }
+                self.shortcutMessage = message ?? "Could not register that shortcut. Rewritr kept the previous shortcut."
+            }
+        }
     }
 
     var apiKeyPlaceholder: String {
-        hasStoredAPIKey ? "Enter a new API key to replace the stored key" : "API key"
+        hasStoredAPIKey ? "Enter a new API key to replace the stored key" : "API key, optional for local providers"
     }
 
     var canTestProvider: Bool {
         testState != .testing
     }
 
-    func save() {
+    func updateProviderBaseURL(_ value: String) {
+        providerBaseURL = value
+        autosaveNormalSettings()
+    }
+
+    func updateProviderModel(_ value: String) {
+        providerModel = value
+        autosaveNormalSettings()
+    }
+
+    func updateRequestTimeoutSeconds(_ value: Int) {
+        requestTimeoutSeconds = value
+        autosaveNormalSettings()
+    }
+
+    func updateRewriteBehavior(_ value: RewriteBehavior) {
+        rewriteBehavior = value
+        autosaveNormalSettings()
+    }
+
+    func updateShortcut(_ value: ShortcutConfiguration) {
+        shortcut = value
+        shortcut.save(to: defaults)
+        shortcutMessage = "Shortcut saved: \(value.displayName)"
+        NotificationCenter.default.post(
+            name: .rewritrShortcutDidChange,
+            object: nil,
+            userInfo: ["shortcut": value]
+        )
+    }
+
+    func autosaveNormalSettings() {
+        guard isReadyForAutosave else {
+            return
+        }
+
         defaults.set(providerBaseURL.trimmingCharacters(in: .whitespacesAndNewlines), forKey: SettingsKey.providerBaseURL)
         defaults.set(providerModel.trimmingCharacters(in: .whitespacesAndNewlines), forKey: SettingsKey.providerModel)
         defaults.set(requestTimeoutSeconds, forKey: SettingsKey.requestTimeoutSeconds)
-        defaults.set(globalShortcutLabel.trimmingCharacters(in: .whitespacesAndNewlines), forKey: SettingsKey.globalShortcutLabel)
         defaults.set(rewriteBehavior.rawValue, forKey: SettingsKey.rewriteBehavior)
+        saveMessage = "Settings saved automatically."
+    }
 
+    private func storeTypedAPIKeyIfNeeded() throws {
         let trimmedAPIKey = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedAPIKey.isEmpty {
-            do {
-                try keychain.save(trimmedAPIKey, account: ProviderConfig.apiKeyKeychainID)
-                apiKeyInput = ""
-                hasStoredAPIKey = true
-                saveMessage = "Settings saved. API key stored in Keychain."
-            } catch {
-                saveMessage = error.localizedDescription
-            }
-        } else {
-            saveMessage = "Settings saved."
+            try keychain.save(trimmedAPIKey, account: ProviderConfig.apiKeyKeychainID)
+            apiKeyInput = ""
+            hasStoredAPIKey = true
         }
     }
 
     func saveRewriteBehavior() {
-        defaults.set(rewriteBehavior.rawValue, forKey: SettingsKey.rewriteBehavior)
-        saveMessage = "Rewrite behavior saved."
+        autosaveNormalSettings()
     }
 
     func testProvider() async {
-        save()
         testState = .testing
 
         do {
             let config = try currentProviderConfig()
             let apiKey = try currentAPIKey()
+            let usesAPIKey = !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             let result = try await client.testConnection(config: config, apiKey: apiKey)
             switch result {
             case .textResponse:
-                testState = .success("Provider test succeeded. Base URL, model, and API key are working.")
+                try storeTypedAPIKeyIfNeeded()
+                testState = .success(usesAPIKey ? "Connected. Provider URL, model, and API key are working." : "Connected. Provider URL and model are working without an API key.")
+                saveMessage = hasStoredAPIKey ? "API key stored securely in macOS Keychain." : "Provider settings verified."
             case .emptyTextResponse:
-                testState = .warning("Provider accepted the request, but returned no text content. Base URL, model, and API key look valid; this model/provider may not support the test prompt through Chat Completions.")
+                try storeTypedAPIKeyIfNeeded()
+                testState = .success("Connected. The provider accepted the test request.")
+                saveMessage = hasStoredAPIKey ? "API key stored securely in macOS Keychain." : "Provider settings verified."
             }
+        } catch {
+            testState = .failure(error.localizedDescription)
+        }
+    }
+
+    func clearStoredAPIKey() {
+        do {
+            try keychain.delete(account: ProviderConfig.apiKeyKeychainID)
+            hasStoredAPIKey = false
+            saveMessage = "Stored API key removed."
         } catch {
             testState = .failure(error.localizedDescription)
         }
@@ -122,7 +184,7 @@ final class SettingsStore: ObservableObject {
             return storedKey
         }
 
-        throw SettingsValidationError(errors: ["API key is required."])
+        return ""
     }
 }
 
@@ -131,6 +193,8 @@ enum SettingsKey {
     static let providerModel = "providerModel"
     static let requestTimeoutSeconds = "requestTimeoutSeconds"
     static let globalShortcutLabel = "globalShortcutLabel"
+    static let shortcutKeyCode = "shortcutKeyCode"
+    static let shortcutModifiers = "shortcutModifiers"
     static let rewriteBehavior = "rewriteBehavior"
     static let hasCompletedOnboarding = "hasCompletedOnboarding"
 }

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to package, for example v0.1.0-beta.1"
+        description: "Tag to package, for example v1.0.0"
         required: true
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
           xcodebuild \
             -project Rewritr.xcodeproj \
             -scheme Rewritr \
-            -configuration Debug \
+            -configuration Release \
             -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/rewritr-derived" \
             build \
@@ -46,7 +46,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
-          APP_PATH="$RUNNER_TEMP/rewritr-derived/Build/Products/Debug/Rewritr.app"
+          APP_PATH="$RUNNER_TEMP/rewritr-derived/Build/Products/Release/Rewritr.app"
           ARTIFACT_DIR="$RUNNER_TEMP/rewritr-artifacts"
           mkdir -p "$ARTIFACT_DIR"
           ditto -c -k --keepParent "$APP_PATH" "$ARTIFACT_DIR/Rewritr-${RELEASE_TAG}.zip"
@@ -65,7 +65,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
-          RELEASE_NOTES="Unsigned macOS beta build. Download Rewritr-${RELEASE_TAG}.zip, unzip it, and grant Accessibility permission to the app bundle path."
+          RELEASE_NOTES="Unsigned macOS build. Download Rewritr-${RELEASE_TAG}.zip, unzip it, move Rewritr.app to a stable location such as /Applications, and grant Accessibility permission to that app bundle path."
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" \

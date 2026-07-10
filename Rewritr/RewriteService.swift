@@ -3,7 +3,6 @@ import Foundation
 enum RewriteServiceError: LocalizedError, Sendable {
     case emptyInput
     case invalidSettings([String])
-    case missingAPIKey
     case longRewriteRequiresConfirmation(wordCount: Int, threshold: Int)
     case emptyRewrite
 
@@ -13,8 +12,6 @@ enum RewriteServiceError: LocalizedError, Sendable {
             "Select text before triggering rewrite."
         case .invalidSettings(let errors):
             errors.joined(separator: "\n")
-        case .missingAPIKey:
-            "API key is required."
         case .longRewriteRequiresConfirmation(let wordCount, let threshold):
             "This is a long rewrite (\(wordCount) words, warning starts at \(threshold)) and may take longer or cost more."
         case .emptyRewrite:
@@ -53,10 +50,7 @@ struct UserDefaultsRewriteSettingsProvider: RewriteSettingsProviding, @unchecked
     }
 
     func apiKey() throws -> String {
-        guard let apiKey = try keychain.read(account: ProviderConfig.apiKeyKeychainID), !apiKey.isEmpty else {
-            throw RewriteServiceError.missingAPIKey
-        }
-        return apiKey
+        try keychain.read(account: ProviderConfig.apiKeyKeychainID) ?? ""
     }
 
     func rewriteBehavior() -> RewriteBehavior {

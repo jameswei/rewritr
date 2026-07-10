@@ -53,7 +53,10 @@ struct RewritePreviewView: View {
             controls
         }
         .padding(16)
-        .frame(width: 440)
+        .frame(minWidth: 340, idealWidth: 440, maxWidth: 560)
+        .onExitCommand {
+            model.actions.dismiss()
+        }
     }
 
     @ViewBuilder
@@ -69,8 +72,9 @@ struct RewritePreviewView: View {
         case .result(let text, let isCopied):
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Rewrite")
-                        .font(.headline)
+                    Label("Rewritten text", systemImage: "sparkles")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
                     if isCopied {
                         Spacer()
                         Label("Copied", systemImage: "checkmark.circle.fill")
@@ -80,10 +84,12 @@ struct RewritePreviewView: View {
                 }
                 ScrollView {
                     Text(text)
+                        .font(.title3)
+                        .lineSpacing(3)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                 }
-                .frame(minHeight: 120, maxHeight: 220)
+                .frame(minHeight: 56, maxHeight: 280)
             }
         case .emptySelection(let message):
             Label(message, systemImage: "text.cursor")
@@ -103,23 +109,66 @@ struct RewritePreviewView: View {
             switch model.state {
             case .loading:
                 Spacer()
-                Button("Dismiss", action: model.actions.dismiss)
+                PreviewIconButton(
+                    systemImage: "xmark",
+                    accessibilityLabel: "Dismiss",
+                    action: model.actions.dismiss
+                )
                     .keyboardShortcut(.cancelAction)
             case .result:
-                Button("Replace", action: model.actions.replace)
+                PreviewIconButton(
+                    systemImage: "checkmark",
+                    accessibilityLabel: "Replace",
+                    action: model.actions.replace
+                )
                     .keyboardShortcut(.defaultAction)
-                Button("Copy", action: model.actions.copy)
-                Button("Retry", action: model.actions.retry)
+                PreviewIconButton(
+                    systemImage: "doc.on.doc",
+                    accessibilityLabel: "Copy",
+                    action: model.actions.copy
+                )
+                PreviewIconButton(
+                    systemImage: "arrow.clockwise",
+                    accessibilityLabel: "Retry",
+                    action: model.actions.retry
+                )
                 Spacer()
-                Button("Dismiss", action: model.actions.dismiss)
-                    .keyboardShortcut(.cancelAction)
+                PreviewIconButton(
+                    systemImage: "xmark",
+                    accessibilityLabel: "Dismiss",
+                    action: model.actions.dismiss
+                )
+                .keyboardShortcut(.cancelAction)
             case .emptySelection, .error:
-                Button("Retry", action: model.actions.retry)
+                PreviewIconButton(
+                    systemImage: "arrow.clockwise",
+                    accessibilityLabel: "Retry",
+                    action: model.actions.retry
+                )
                 Spacer()
-                Button("Dismiss", action: model.actions.dismiss)
+                PreviewIconButton(
+                    systemImage: "xmark",
+                    accessibilityLabel: "Dismiss",
+                    action: model.actions.dismiss
+                )
                     .keyboardShortcut(.cancelAction)
             }
         }
+    }
+}
+
+private struct PreviewIconButton: View {
+    let systemImage: String
+    let accessibilityLabel: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .frame(width: 22, height: 22)
+        }
+        .help(accessibilityLabel)
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 
@@ -136,6 +185,7 @@ final class RewritePreviewPresenter {
         if let model {
             model.update(state: state, actions: actions)
             panel?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
             return
         }
 
@@ -148,13 +198,14 @@ final class RewritePreviewPresenter {
         panel.isReleasedWhenClosed = false
         panel.hidesOnDeactivate = false
         panel.level = .floating
-        panel.setContentSize(NSSize(width: 440, height: 260))
+        panel.setContentSize(size(for: state))
         if let anchor {
             placeNearSelection(anchor, panel: panel)
         } else {
             placeNearCursor(panel)
         }
         panel.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
 
         self.model = model
         self.panel = panel
@@ -162,6 +213,9 @@ final class RewritePreviewPresenter {
 
     func update(_ state: RewritePreviewState) {
         model?.state = state
+        if let panel {
+            panel.setContentSize(size(for: state))
+        }
     }
 
     func dismiss() {
@@ -194,5 +248,165 @@ final class RewritePreviewPresenter {
         let x = min(max(mouseLocation.x, visibleFrame.minX), visibleFrame.maxX - panelSize.width)
         let y = min(max(mouseLocation.y, visibleFrame.minY + panelSize.height), visibleFrame.maxY)
         panel.setFrameTopLeftPoint(NSPoint(x: x, y: y))
+    }
+
+    private func size(for state: RewritePreviewState) -> NSSize {
+        switch state {
+        case .loading:
+            return NSSize(width: 340, height: 130)
+        case .emptySelection, .error:
+            return NSSize(width: 420, height: 170)
+        case .result(let text, _):
+            let characterCount = text.count
+            let width = min(560, max(360, 320 + characterCount / 8))
+            let height = min(420, max(180, 150 + characterCount / 6))
+            return NSSize(width: CGFloat(width), height: CGFloat(height))
+        }
+    }
+}
+
+enum RewriteStatusHUDState: Equatable {
+    case working(String)
+    case success(String)
+    case failure(String)
+}
+
+@MainActor
+final class RewriteStatusHUDPresenter {
+    private var panel: NSPanel?
+    private var hostingController: NSHostingController<RewriteStatusHUDView>?
+    private var dismissTask: Task<Void, Never>?
+
+    func show(_ state: RewriteStatusHUDState, anchor: CGRect? = nil) {
+        dismissTask?.cancel()
+        if let panel, let hostingController {
+            hostingController.rootView = RewriteStatusHUDView(state: state)
+            place(panel: panel, anchor: anchor)
+            panel.orderFrontRegardless()
+            scheduleDismissIfNeeded(for: state)
+            return
+        }
+
+        let hostingController = NSHostingController(rootView: RewriteStatusHUDView(state: state))
+        let panel = NSPanel(contentViewController: hostingController)
+        panel.styleMask = [.borderless, .nonactivatingPanel]
+        panel.isReleasedWhenClosed = false
+        panel.hidesOnDeactivate = false
+        panel.level = .floating
+        panel.backgroundColor = .clear
+        panel.isOpaque = false
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
+        panel.setContentSize(NSSize(width: 240, height: 56))
+        place(panel: panel, anchor: anchor)
+        panel.orderFrontRegardless()
+
+        self.panel = panel
+        self.hostingController = hostingController
+        scheduleDismissIfNeeded(for: state)
+    }
+
+    func dismiss() {
+        dismissTask?.cancel()
+        panel?.close()
+        panel = nil
+        hostingController = nil
+    }
+
+    private func scheduleDismissIfNeeded(for state: RewriteStatusHUDState) {
+        switch state {
+        case .working:
+            return
+        case .success, .failure:
+            dismissTask = Task { [weak self] in
+                do {
+                    try await Task.sleep(nanoseconds: 1_600_000_000)
+                } catch {
+                    return
+                }
+                await MainActor.run {
+                    self?.dismiss()
+                }
+            }
+        }
+    }
+
+    private func place(panel: NSPanel, anchor: CGRect?) {
+        if let anchor {
+            placeNearSelection(anchor, panel: panel)
+        } else {
+            placeNearCursor(panel)
+        }
+    }
+
+    private func placeNearSelection(_ selectionBounds: CGRect, panel: NSPanel) {
+        let screen = NSScreen.screens.first { screen in
+            screen.visibleFrame.intersects(selectionBounds)
+        } ?? NSScreen.main
+        let visibleFrame = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
+        let panelSize = panel.frame.size
+        let preferredX = selectionBounds.midX - panelSize.width / 2
+        let preferredY = selectionBounds.maxY + panelSize.height + 12
+        let x = min(max(preferredX, visibleFrame.minX), visibleFrame.maxX - panelSize.width)
+        let y = min(max(preferredY, visibleFrame.minY + panelSize.height), visibleFrame.maxY)
+        panel.setFrameTopLeftPoint(NSPoint(x: x, y: y))
+    }
+
+    private func placeNearCursor(_ panel: NSPanel) {
+        let mouseLocation = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { screen in
+            screen.visibleFrame.contains(mouseLocation)
+        } ?? NSScreen.main
+        let visibleFrame = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
+        let panelSize = panel.frame.size
+        let preferredX = mouseLocation.x - panelSize.width / 2
+        let preferredY = mouseLocation.y + panelSize.height + 12
+        let x = min(max(preferredX, visibleFrame.minX), visibleFrame.maxX - panelSize.width)
+        let y = min(max(preferredY, visibleFrame.minY + panelSize.height), visibleFrame.maxY)
+        panel.setFrameTopLeftPoint(NSPoint(x: x, y: y))
+    }
+}
+
+struct RewriteStatusHUDView: View {
+    let state: RewriteStatusHUDState
+
+    var body: some View {
+        HStack(spacing: 10) {
+            icon
+            Text(message)
+                .font(.headline)
+                .lineLimit(2)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.secondary.opacity(0.22), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+        switch state {
+        case .working:
+            ProgressView()
+                .controlSize(.small)
+        case .success:
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .failure:
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+        }
+    }
+
+    private var message: String {
+        switch state {
+        case .working(let message), .success(let message), .failure(let message):
+            message
+        }
     }
 }

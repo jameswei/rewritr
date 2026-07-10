@@ -14,6 +14,7 @@ final class RewriteCoordinator {
     private let clipboardAutomator: ClipboardAutomator
     private let rewriteService: RewriteService
     private let previewPresenter: RewritePreviewPresenter
+    private let statusHUDPresenter: RewriteStatusHUDPresenter
     private let logger = Logger(subsystem: "space.lifeplayer.rewritr", category: "rewrite")
     private var activeTask: Task<Void, Never>?
     private static let sourceActivationTimeout: TimeInterval = 1.5
@@ -22,16 +23,19 @@ final class RewriteCoordinator {
     init(
         clipboardAutomator: ClipboardAutomator = ClipboardAutomator(),
         rewriteService: RewriteService = RewriteService(),
-        previewPresenter: RewritePreviewPresenter = RewritePreviewPresenter()
+        previewPresenter: RewritePreviewPresenter = RewritePreviewPresenter(),
+        statusHUDPresenter: RewriteStatusHUDPresenter = RewriteStatusHUDPresenter()
     ) {
         self.clipboardAutomator = clipboardAutomator
         self.rewriteService = rewriteService
         self.previewPresenter = previewPresenter
+        self.statusHUDPresenter = statusHUDPresenter
     }
 
     func triggerRewrite() {
         activeTask?.cancel()
         previewPresenter.dismiss()
+        statusHUDPresenter.dismiss()
         activeTask = Task { [weak self] in
             guard let self else { return }
             await self.captureSelectionForRewrite()
@@ -44,17 +48,17 @@ final class RewriteCoordinator {
             let capture = try await clipboardAutomator.captureSelectedText()
             logger.info("Captured selected text for rewrite. characters=\(capture.text.count, privacy: .public)")
             await rewrite(capture: capture)
-        } catch is CancellationError {
+        } catch where isCancellation(error) {
             logger.debug("Selection capture cancelled.")
             activityHandler?(.idle)
         } catch ClipboardAutomationError.emptySelection {
             logger.info("Rewrite trigger ignored because no selected text was captured.")
             activityHandler?(.failed("No selected text."))
-            showEmptySelection()
+            showEmptySelection(anchor: nil)
         } catch {
             logger.error("Selection capture failed: \(error.localizedDescription, privacy: .public)")
             activityHandler?(.failed("Rewrite failed."))
-            showError(error.localizedDescription)
+            showError(error.localizedDescription, anchor: nil)
         }
     }
 
@@ -62,6 +66,8 @@ final class RewriteCoordinator {
         let behavior = rewriteService.rewriteBehavior()
         if behavior == .previewBeforeReplacing {
             showLoading(capture: capture)
+        } else {
+            statusHUDPresenter.show(.working("Rewriting..."), anchor: capture.selectionBounds)
         }
         activityHandler?(.working("Rewriting selected text..."))
 
@@ -77,30 +83,40 @@ final class RewriteCoordinator {
                 activityHandler?(.idle)
                 showResult(capture: capture, refinedText: result.refinedText)
             case .replaceInstantly:
-                await replace(capture: capture, refinedText: result.refinedText)
+                await replace(capture: capture, refinedText: result.refinedText, showsHUD: true)
             }
-        } catch is CancellationError {
+        } catch where isCancellation(error) {
             logger.debug("Rewrite cancelled.")
             activityHandler?(.idle)
         } catch {
             logger.error("Rewrite failed: \(error.localizedDescription, privacy: .public)")
             activityHandler?(.failed("Rewrite failed."))
-            showError(error.localizedDescription, retryCapture: capture)
+            showError(error.localizedDescription, retryCapture: capture, anchor: capture.selectionBounds)
         }
     }
 
-    private func replace(capture: SelectedTextCapture, refinedText: String) async {
+    private func replace(capture: SelectedTextCapture, refinedText: String, showsHUD: Bool) async {
         do {
             previewPresenter.dismiss()
             activityHandler?(.working("Replacing selected text..."))
+            if showsHUD {
+                statusHUDPresenter.show(.working("Replacing..."), anchor: capture.selectionBounds)
+            }
             try await activateSourceApp(for: capture)
             try await clipboardAutomator.pasteText(refinedText)
             activityHandler?(.succeeded("Rewrite replaced."))
+            if showsHUD {
+                statusHUDPresenter.show(.success("Replaced"), anchor: capture.selectionBounds)
+            }
         } catch {
             logger.error("Replacement paste failed: \(error.localizedDescription, privacy: .public)")
             clipboardAutomator.copyTextToClipboard(refinedText)
             activityHandler?(.failed("Could not replace text."))
-            showError("Could not paste into the original app. The refined text was copied so you can paste it manually.", retryCapture: capture)
+            if showsHUD {
+                statusHUDPresenter.show(.failure("Could not replace. Copied."), anchor: capture.selectionBounds)
+            } else {
+                showError("Could not paste into the original app. The refined text was copied so you can paste it manually.", retryCapture: capture, anchor: capture.selectionBounds)
+            }
         }
     }
 
@@ -120,7 +136,12 @@ final class RewriteCoordinator {
         )
     }
 
-    private func showEmptySelection() {
+    private func showEmptySelection(anchor: CGRect?) {
+        if rewriteService.rewriteBehavior() == .replaceInstantly {
+            statusHUDPresenter.show(.failure("No selected text"), anchor: anchor)
+            return
+        }
+
         previewPresenter.show(
             state: .emptySelection(ClipboardAutomationError.emptySelection.localizedDescription),
             actions: RewritePreviewActions(
@@ -132,7 +153,12 @@ final class RewriteCoordinator {
         )
     }
 
-    private func showError(_ message: String, retryCapture: SelectedTextCapture? = nil) {
+    private func showError(_ message: String, retryCapture: SelectedTextCapture? = nil, anchor: CGRect? = nil) {
+        if rewriteService.rewriteBehavior() == .replaceInstantly {
+            statusHUDPresenter.show(.failure("Rewrite failed"), anchor: anchor)
+            return
+        }
+
         previewPresenter.show(
             state: .error(message),
             actions: RewritePreviewActions(
@@ -160,7 +186,7 @@ final class RewriteCoordinator {
                 guard let self, let refinedText else { return }
                 self.activeTask?.cancel()
                 self.activeTask = Task { [weak self] in
-                    await self?.replace(capture: capture, refinedText: refinedText)
+                    await self?.replace(capture: capture, refinedText: refinedText, showsHUD: false)
                 }
             },
             copy: { [weak self] in
@@ -240,5 +266,17 @@ final class RewriteCoordinator {
         }
 
         throw ClipboardAutomationError.pasteTimedOut
+    }
+
+    private func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError {
+            return true
+        }
+
+        if let urlError = error as? URLError, urlError.code == .cancelled {
+            return true
+        }
+
+        return (error as NSError).code == NSUserCancelledError
     }
 }

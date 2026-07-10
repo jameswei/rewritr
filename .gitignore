@@ -2,6 +2,7 @@
 xcuserdata/
 DerivedData/
 .build/
+.polish/
 *.xcuserstate
 FINAL_PLAN.md
 TASKBOARD.md

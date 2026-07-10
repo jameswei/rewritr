@@ -36,7 +36,7 @@ jobs:
             build \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Build tests
+      - name: Run tests
         run: |
           xcodebuild \
             -project Rewritr.xcodeproj \
@@ -44,5 +44,5 @@ jobs:
             -configuration Debug \
             -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/rewritr-derived" \
-            build-for-testing \
+            test \
             CODE_SIGNING_ALLOWED=NO

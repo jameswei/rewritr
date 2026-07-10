@@ -17,21 +17,22 @@ enum GlobalShortcutError: LocalizedError, Sendable {
 
 @MainActor
 final class GlobalShortcutController {
-    static let defaultShortcutLabel = "Control+Option+R"
+    static let defaultShortcutLabel = ShortcutConfiguration.defaultShortcut.displayName
 
-    private let keyCode: UInt32
-    private let modifiers: UInt32
+    private var shortcut: ShortcutConfiguration
     private let onTrigger: @MainActor () -> Void
     nonisolated(unsafe) private var eventHandlerRef: EventHandlerRef?
     nonisolated(unsafe) private var hotKeyRef: EventHotKeyRef?
 
+    var currentShortcut: ShortcutConfiguration {
+        shortcut
+    }
+
     init(
-        keyCode: UInt32 = UInt32(kVK_ANSI_R),
-        modifiers: UInt32 = UInt32(controlKey | optionKey),
+        shortcut: ShortcutConfiguration = ShortcutConfiguration.load(),
         onTrigger: @escaping @MainActor () -> Void
     ) {
-        self.keyCode = keyCode
-        self.modifiers = modifiers
+        self.shortcut = shortcut
         self.onTrigger = onTrigger
     }
 
@@ -45,7 +46,53 @@ final class GlobalShortcutController {
     }
 
     func start() throws {
-        if hotKeyRef != nil {
+        try installHandlerIfNeeded()
+        try register(shortcut)
+    }
+
+    func update(to newShortcut: ShortcutConfiguration) throws {
+        guard newShortcut != shortcut else {
+            return
+        }
+        try installHandlerIfNeeded()
+        let previousHotKeyRef = hotKeyRef
+        let previousShortcut = shortcut
+
+        hotKeyRef = nil
+        do {
+            try register(newShortcut)
+            if let previousHotKeyRef {
+                UnregisterEventHotKey(previousHotKeyRef)
+            }
+        } catch {
+            hotKeyRef = previousHotKeyRef
+            shortcut = previousShortcut
+            throw error
+        }
+    }
+
+    private func register(_ shortcut: ShortcutConfiguration) throws {
+        guard hotKeyRef == nil else {
+            return
+        }
+
+        let hotKeyID = EventHotKeyID(signature: 0x72777472, id: 1)
+        let hotKeyStatus = RegisterEventHotKey(
+            shortcut.keyCode,
+            shortcut.modifiers,
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &hotKeyRef
+        )
+        guard hotKeyStatus == noErr else {
+            throw GlobalShortcutError.registerHotKeyFailed(hotKeyStatus)
+        }
+        self.shortcut = shortcut
+    }
+
+    private func installHandlerIfNeeded() throws {
+        if eventHandlerRef != nil {
             return
         }
 
@@ -74,19 +121,6 @@ final class GlobalShortcutController {
         )
         guard handlerStatus == noErr else {
             throw GlobalShortcutError.installHandlerFailed(handlerStatus)
-        }
-
-        let hotKeyID = EventHotKeyID(signature: 0x72777472, id: 1)
-        let hotKeyStatus = RegisterEventHotKey(
-            keyCode,
-            modifiers,
-            hotKeyID,
-            GetApplicationEventTarget(),
-            0,
-            &hotKeyRef
-        )
-        guard hotKeyStatus == noErr else {
-            throw GlobalShortcutError.registerHotKeyFailed(hotKeyStatus)
         }
     }
 

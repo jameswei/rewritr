@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import XCTest
 @testable import Rewritr
 
@@ -7,17 +8,17 @@ final class RewritrTests: XCTestCase {
         XCTAssertTrue(true)
     }
 
-    func testChatCompletionsURLAppendsEndpoint() {
+    func testChatCompletionsURLUsesExactProviderURL() {
         XCTAssertEqual(
-            ProviderConfig.chatCompletionsURL(from: "https://api.openai.com/v1")?.absoluteString,
+            ProviderConfig.chatCompletionsURL(from: "https://api.openai.com/v1/chat/completions")?.absoluteString,
             "https://api.openai.com/v1/chat/completions"
         )
     }
 
-    func testChatCompletionsURLAcceptsExistingEndpoint() {
+    func testChatCompletionsURLDoesNotAppendEndpoint() {
         XCTAssertEqual(
-            ProviderConfig.chatCompletionsURL(from: "https://example.com/v1/chat/completions")?.absoluteString,
-            "https://example.com/v1/chat/completions"
+            ProviderConfig.chatCompletionsURL(from: "https://example.com/custom/rewrite")?.absoluteString,
+            "https://example.com/custom/rewrite"
         )
     }
 
@@ -98,19 +99,21 @@ final class RewritrTests: XCTestCase {
             )
             XCTFail("Expected provider error.")
         } catch let error as ProviderClientError {
-            XCTAssertEqual(error.localizedDescription, "Provider error 401: Invalid API key")
+            XCTAssertEqual(error.localizedDescription, "Authentication failed. Check your API key. If you use a local provider that does not need a key, leave the API key field blank. (HTTP 401: Invalid API key)")
         }
     }
 
-    func testProviderTestRequiresExactOK() async throws {
+    func testProviderClientOmitsAuthorizationHeaderForLocalProviderWithoutAPIKey() async throws {
         let client = ProviderClient { request in
+            XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+
             let data = Data("""
             {
               "choices": [
                 {
                   "message": {
                     "role": "assistant",
-                    "content": "Not OK"
+                    "content": "OK"
                   }
                 }
               ]
@@ -125,12 +128,80 @@ final class RewritrTests: XCTestCase {
             return (data, response)
         }
 
-        do {
-            _ = try await client.testConnection(config: testConfig(), apiKey: "test-key")
-            XCTFail("Expected unexpected test response error.")
-        } catch let error as ProviderClientError {
-            XCTAssertEqual(error.localizedDescription, "Provider responded, but returned Not OK instead of OK.")
+        let result = try await client.chatCompletion(
+            config: testConfig(),
+            apiKey: "",
+            messages: [ChatMessage(role: "user", content: "Hello")]
+        )
+
+        XCTAssertEqual(result, "OK")
+    }
+
+    func testProviderClientUsesFriendlyMessagesForCommonHTTPFailures() async throws {
+        let cases: [(Int, String, String)] = [
+            (400, "Bad request", "The provider rejected the request. Check the Provider URL, model name, and whether the endpoint supports OpenAI-compatible Chat Completions. (HTTP 400: Bad request)"),
+            (403, "Forbidden", "Access was denied. Check whether your API key is allowed to use this model and endpoint. (HTTP 403: Forbidden)"),
+            (404, "Not found", "The provider endpoint was not found. Check the full Provider URL and model name; different providers may use different Chat Completions paths. (HTTP 404: Not found)"),
+            (429, "Too many requests", "The provider rate limit was reached. Wait a moment, or check your provider quota. (HTTP 429: Too many requests)")
+        ]
+
+        for (statusCode, providerMessage, expectedMessage) in cases {
+            let client = ProviderClient { request in
+                let data = Data("""
+                {
+                  "error": {
+                    "message": "\(providerMessage)"
+                  }
+                }
+                """.utf8)
+                let response = try XCTUnwrap(HTTPURLResponse(
+                    url: try XCTUnwrap(request.url),
+                    statusCode: statusCode,
+                    httpVersion: nil,
+                    headerFields: nil
+                ))
+                return (data, response)
+            }
+
+            do {
+                _ = try await client.chatCompletion(
+                    config: testConfig(),
+                    apiKey: "test-key",
+                    messages: [ChatMessage(role: "user", content: "Hello")]
+                )
+                XCTFail("Expected provider error.")
+            } catch let error as ProviderClientError {
+                XCTAssertEqual(error.localizedDescription, expectedMessage)
+            }
         }
+    }
+
+    func testProviderTestAcceptsAnyTextResponse() async throws {
+        let client = ProviderClient { request in
+            let data = Data("""
+            {
+              "choices": [
+                {
+                  "message": {
+                    "role": "assistant",
+                    "content": "Connected"
+                  }
+                }
+              ]
+            }
+            """.utf8)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: try XCTUnwrap(request.url),
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            ))
+            return (data, response)
+        }
+
+        let result = try await client.testConnection(config: testConfig(), apiKey: "test-key")
+
+        XCTAssertEqual(result, .textResponse)
     }
 
     func testProviderTestAcceptsEmptyTextAsReachableProvider() async throws {
@@ -254,6 +325,42 @@ final class RewritrTests: XCTestCase {
         XCTAssertEqual(result.refinedText, "I agree.")
     }
 
+    func testRewriteServiceSupportsLocalProviderWithoutAPIKey() async throws {
+        let settings = StaticRewriteSettingsProvider(
+            config: testConfig(),
+            apiKey: "",
+            behavior: .previewBeforeReplacing
+        )
+        let client = ProviderClient { request in
+            XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+
+            let data = Data("""
+            {
+              "choices": [
+                {
+                  "message": {
+                    "role": "assistant",
+                    "content": "I agree."
+                  }
+                }
+              ]
+            }
+            """.utf8)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: try XCTUnwrap(request.url),
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            ))
+            return (data, response)
+        }
+        let service = RewriteService(settingsProvider: settings, client: client)
+
+        let result = try await service.rewrite(inputText: "I am agree.")
+
+        XCTAssertEqual(result.refinedText, "I agree.")
+    }
+
     func testRewriteServiceRequiresConfirmationForLongInstantRewrite() async throws {
         let settings = StaticRewriteSettingsProvider(
             config: testConfig(),
@@ -278,11 +385,165 @@ final class RewritrTests: XCTestCase {
         defaults.removePersistentDomain(forName: suiteName)
         let store = SettingsStore(defaults: defaults)
 
-        store.rewriteBehavior = .replaceInstantly
-        store.saveRewriteBehavior()
+        store.updateRewriteBehavior(.replaceInstantly)
 
         XCTAssertEqual(defaults.string(forKey: SettingsKey.rewriteBehavior), RewriteBehavior.replaceInstantly.rawValue)
         XCTAssertEqual(SettingsStore(defaults: defaults).rewriteBehavior, .replaceInstantly)
+    }
+
+    @MainActor
+    func testSettingsStoreAutosavesNormalProviderSettings() {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try! XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = SettingsStore(defaults: defaults)
+
+        store.updateProviderBaseURL(" https://api.example.com/v1/chat/completions ")
+        store.updateProviderModel(" fast-model ")
+        store.updateRequestTimeoutSeconds(35)
+
+        XCTAssertEqual(defaults.string(forKey: SettingsKey.providerBaseURL), "https://api.example.com/v1/chat/completions")
+        XCTAssertEqual(defaults.string(forKey: SettingsKey.providerModel), "fast-model")
+        XCTAssertEqual(defaults.integer(forKey: SettingsKey.requestTimeoutSeconds), 35)
+    }
+
+    @MainActor
+    func testSettingsStoreSavesTypedAPIKeyOnlyAfterSuccessfulProviderTest() async throws {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let keychain = KeychainStore(service: suiteName)
+        let client = ProviderClient { request in
+            let data = Data("""
+            {
+              "choices": [
+                {
+                  "message": {
+                    "role": "assistant",
+                    "content": "OK"
+                  }
+                }
+              ]
+            }
+            """.utf8)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: try XCTUnwrap(request.url),
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            ))
+            return (data, response)
+        }
+        let store = SettingsStore(defaults: defaults, keychain: keychain, client: client)
+        store.updateProviderBaseURL("https://api.example.com/v1/chat/completions")
+        store.updateProviderModel("fast-model")
+        store.apiKeyInput = "verified-key"
+
+        await store.testProvider()
+
+        XCTAssertEqual(try keychain.read(account: ProviderConfig.apiKeyKeychainID), "verified-key")
+        XCTAssertTrue(store.apiKeyInput.isEmpty)
+    }
+
+    @MainActor
+    func testSettingsStoreDoesNotSaveTypedAPIKeyAfterFailedProviderTest() async throws {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let keychain = KeychainStore(service: suiteName)
+        let client = ProviderClient { request in
+            let data = Data("""
+            {
+              "error": {
+                "message": "Invalid API key"
+              }
+            }
+            """.utf8)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: try XCTUnwrap(request.url),
+                statusCode: 401,
+                httpVersion: nil,
+                headerFields: nil
+            ))
+            return (data, response)
+        }
+        let store = SettingsStore(defaults: defaults, keychain: keychain, client: client)
+        store.updateProviderBaseURL("https://api.example.com/v1/chat/completions")
+        store.updateProviderModel("fast-model")
+        store.apiKeyInput = "bad-key"
+
+        await store.testProvider()
+
+        XCTAssertNil(try keychain.read(account: ProviderConfig.apiKeyKeychainID))
+        XCTAssertEqual(store.apiKeyInput, "bad-key")
+    }
+
+    @MainActor
+    func testSettingsStoreAllowsProviderTestWithoutAPIKey() async throws {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let keychain = KeychainStore(service: suiteName)
+        let client = ProviderClient { request in
+            XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+            let data = Data("""
+            {
+              "choices": [
+                {
+                  "message": {
+                    "role": "assistant",
+                    "content": "Connected"
+                  }
+                }
+              ]
+            }
+            """.utf8)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: try XCTUnwrap(request.url),
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            ))
+            return (data, response)
+        }
+        let store = SettingsStore(defaults: defaults, keychain: keychain, client: client)
+        store.updateProviderBaseURL("https://localhost:11434/v1/chat/completions")
+        store.updateProviderModel("local-model")
+
+        await store.testProvider()
+
+        XCTAssertNil(try keychain.read(account: ProviderConfig.apiKeyKeychainID))
+        XCTAssertEqual(store.testState, .success("Connected. Provider URL and model are working without an API key."))
+    }
+
+    @MainActor
+    func testSettingsStoreCanClearStoredAPIKey() async throws {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let keychain = KeychainStore(service: suiteName)
+        try keychain.save("stored-key", account: ProviderConfig.apiKeyKeychainID)
+        let store = SettingsStore(defaults: defaults, keychain: keychain)
+
+        store.clearStoredAPIKey()
+
+        XCTAssertFalse(store.hasStoredAPIKey)
+        XCTAssertNil(try keychain.read(account: ProviderConfig.apiKeyKeychainID))
+    }
+
+    func testShortcutConfigurationPersistsKeyCodeAndModifiers() {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try! XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let shortcut = ShortcutConfiguration(
+            keyCode: UInt32(kVK_ANSI_K),
+            modifiers: UInt32(controlKey | optionKey | shiftKey)
+        )
+
+        shortcut.save(to: defaults)
+
+        XCTAssertEqual(ShortcutConfiguration.load(from: defaults), shortcut)
+        XCTAssertEqual(defaults.string(forKey: SettingsKey.globalShortcutLabel), "Control+Option+Shift+K")
     }
 
     func testPasteboardSnapshotRestoresPreviousString() {
@@ -335,7 +596,7 @@ final class RewritrTests: XCTestCase {
 
     private func testConfig() -> ProviderConfig {
         ProviderConfig(
-            baseURL: "https://api.example.com/v1",
+            baseURL: "https://api.example.com/v1/chat/completions",
             model: "test-model",
             apiKeyKeychainID: ProviderConfig.apiKeyKeychainID,
             timeoutSeconds: 20

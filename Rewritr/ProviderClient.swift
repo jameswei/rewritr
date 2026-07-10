@@ -6,23 +6,48 @@ enum ProviderClientError: LocalizedError, Sendable {
     case providerError(statusCode: Int, message: String)
     case emptyResponse
     case malformedResponse
-    case unexpectedTestResponse(String)
 
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            "Provider base URL is invalid."
+            "Provider URL is invalid."
         case .invalidHTTPResponse:
             "Provider returned an invalid response."
         case .providerError(let statusCode, let message):
-            "Provider error \(statusCode): \(message)"
+            Self.friendlyProviderError(statusCode: statusCode, message: message)
         case .emptyResponse:
             "Provider returned no text content."
         case .malformedResponse:
             "Provider returned a response Rewritr could not read."
-        case .unexpectedTestResponse(let value):
-            "Provider responded, but returned \(value) instead of OK."
         }
+    }
+
+    private static func friendlyProviderError(statusCode: Int, message: String) -> String {
+        let guidance: String
+        switch statusCode {
+        case 400:
+            guidance = "The provider rejected the request. Check the Provider URL, model name, and whether the endpoint supports OpenAI-compatible Chat Completions."
+        case 401:
+            guidance = "Authentication failed. Check your API key. If you use a local provider that does not need a key, leave the API key field blank."
+        case 403:
+            guidance = "Access was denied. Check whether your API key is allowed to use this model and endpoint."
+        case 404:
+            guidance = "The provider endpoint was not found. Check the full Provider URL and model name; different providers may use different Chat Completions paths."
+        case 408:
+            guidance = "The provider timed out. Check the Provider URL and try a higher timeout."
+        case 429:
+            guidance = "The provider rate limit was reached. Wait a moment, or check your provider quota."
+        case 500..<600:
+            guidance = "The provider returned a server error. Try again later, or check the provider status."
+        default:
+            guidance = "The provider rejected the request. Check the Provider URL, model name, and API key."
+        }
+
+        let trimmedMessage = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedMessage.isEmpty else {
+            return "\(guidance) (HTTP \(statusCode))"
+        }
+        return "\(guidance) (HTTP \(statusCode): \(trimmedMessage))"
     }
 }
 
@@ -43,14 +68,13 @@ struct ProviderClient: Sendable {
     }
 
     func testConnection(config: ProviderConfig, apiKey: String) async throws -> ProviderConnectionTestResult {
-        let response: String
         do {
-            response = try await chatCompletion(
+            _ = try await chatCompletion(
                 config: config,
                 apiKey: apiKey,
                 messages: [
-                    ChatMessage(role: "system", content: "Reply with only the word OK."),
-                    ChatMessage(role: "user", content: "Connection test")
+                    ChatMessage(role: "system", content: "Reply with a very short confirmation."),
+                    ChatMessage(role: "user", content: "Connection test.")
                 ],
                 maxTokens: 8
             )
@@ -58,13 +82,6 @@ struct ProviderClient: Sendable {
             return .emptyTextResponse
         }
 
-        let trimmed = response
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .trimmingCharacters(in: CharacterSet(charactersIn: "\"'`"))
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.lowercased() == "ok" || trimmed.lowercased() == "ok." else {
-            throw ProviderClientError.unexpectedTestResponse(trimmed)
-        }
         return .textResponse
     }
 
@@ -80,7 +97,10 @@ struct ProviderClient: Sendable {
 
         var request = URLRequest(url: url, timeoutInterval: TimeInterval(config.timeoutSeconds))
         request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        let trimmedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedAPIKey.isEmpty {
+            request.setValue("Bearer \(trimmedAPIKey)", forHTTPHeaderField: "Authorization")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(
             ChatCompletionRequest(
