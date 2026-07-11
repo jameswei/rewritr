@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rewritr - 面向 macOS 的隐私优先英文改写</title>
+    <meta
+      name="description"
+      content="Rewritr 是一个隐私优先、开源的 macOS 菜单栏应用，帮助非英语母语用户把选中的英文改写得更自然、更顺畅。"
+    />
+    <link rel="alternate" hreflang="en" href="../" />
+    <link rel="alternate" hreflang="zh-Hans" href="./" />
+    <link rel="alternate" hreflang="zh-Hant" href="../zh-TW/" />
+    <link rel="alternate" hreflang="ja" href="../ja/" />
+    <link rel="alternate" hreflang="x-default" href="../" />
+    <link rel="icon" href="../assets/app-icon.png" type="image/png" />
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="主导航">
+        <a class="brand" href="#top" aria-label="Rewritr 首页">
+          <img class="brand-mark" src="../assets/app-icon.png" alt="" />
+          <span>Rewritr</span>
+        </a>
+        <div class="nav-links">
+          <a href="#privacy">隐私</a>
+          <a href="#workflow">流程</a>
+          <a href="#screenshots">截图</a>
+          <a href="https://github.com/jameswei/rewritr" class="nav-button">GitHub</a>
+        </div>
+        <div class="language-switcher" aria-label="语言选择">
+          <a href="../">EN</a>
+          <a href="./" aria-current="page">简</a>
+          <a href="../zh-TW/">繁</a>
+          <a href="../ja/">日</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">原生 macOS 写作助手</p>
+            <h1 id="hero-title">
+              <span class="title-part">隐私优先，</span>
+              <span class="title-part">开源透明的</span>
+              <span class="title-part">英文改写工具。</span>
+            </h1>
+            <p class="hero-lede">
+              <span class="mobile-line">Rewritr 帮助非英语母语用户</span>
+              <span class="mobile-line">把选中的英文改写得更顺畅、</span>
+              <span class="mobile-line">更自然、更接近母语表达，</span>
+              <span class="mobile-line">就在你正在写作的地方完成。</span>
+            </p>
+            <p class="hero-note">
+              <span class="mobile-line">不需要 Rewritr 托管账号。</span>
+              <span class="mobile-line">不保存改写历史。不做分析统计。</span>
+              <span class="mobile-line">使用你自己的 OpenAI-compatible provider，</span>
+              <span class="mobile-line">也可以连接本地模型。</span>
+            </p>
+            <div class="hero-actions" aria-label="主要操作">
+              <a class="button primary" href="https://github.com/jameswei/rewritr/releases">下载 macOS 版本</a>
+              <a class="button secondary" href="https://github.com/jameswei/rewritr">查看源码</a>
+            </div>
+          </div>
+          <div class="hero-panel" aria-label="Rewritr 价值概览">
+            <img class="hero-icon" src="../assets/app-icon.png" alt="Rewritr app icon" />
+            <div class="rewrite-demo">
+              <span class="demo-label">Selected text</span>
+              <p>I want make this sentence more natural for daily work.</p>
+              <span class="demo-arrow" aria-hidden="true">Rewritten</span>
+              <p class="demo-result">I want to make this sentence sound more natural for everyday work.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section trust-section" id="privacy" aria-labelledby="privacy-title">
+        <div class="container section-heading compact">
+          <p class="eyebrow">隐私优先</p>
+          <h2 id="privacy-title">你的文本应该由你掌控。</h2>
+          <p>
+            Rewritr 刻意保持小而清晰。它不运行后端服务，不收集分析数据，
+            不保存改写历史，也不要求你创建账号。
+          </p>
+        </div>
+        <div class="container value-grid">
+          <article class="value-card highlight">
+            <span>无 Rewritr 后端</span>
+            <h3>只发送选中的文本</h3>
+            <p>
+              应用只会把你明确选中的文本发送到你配置的 provider endpoint。
+            </p>
+          </article>
+          <article class="value-card">
+            <span>自带 provider</span>
+            <h3>由你决定改写发生在哪里</h3>
+            <p>
+              可以使用 OpenAI-compatible 云端 endpoint，也可以使用本地模型，
+              让数据留在自己的机器或网络里。
+            </p>
+          </article>
+          <article class="value-card">
+            <span>macOS Keychain</span>
+            <h3>API key 留在你的 Mac</h3>
+            <p>
+              Provider key 保存在 Keychain。非敏感设置保存在本地应用偏好设置中。
+            </p>
+          </article>
+          <article class="value-card">
+            <span>开源</span>
+            <h3>可以检查它做了什么</h3>
+            <p>
+              Rewritr 免费且开源，信任模型是可见的，而不是藏在托管写作服务背后。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section muted" id="workflow" aria-labelledby="workflow-title">
+        <div class="container split-layout">
+          <div>
+            <p class="eyebrow">用途</p>
+            <h2 id="workflow-title">更自然的日常英文，而不是新的写作平台。</h2>
+          </div>
+          <div class="section-copy">
+            <p>
+              Rewritr 面向已经知道自己想表达什么、只是希望最终英文更顺畅自然的人。
+            </p>
+            <p>
+              它不是文档编辑器、AI 内容生成器、学术写作套件、浏览器插件，
+              也不是订阅制写作账号。
+            </p>
+          </div>
+        </div>
+        <div class="container step-grid" aria-label="改写流程">
+          <article class="step-card">
+            <span>01</span>
+            <h3>选中文本</h3>
+            <p>在你正在使用的应用里，选中想要改进的句子或段落。</p>
+          </article>
+          <article class="step-card">
+            <span>02</span>
+            <h3>触发 Rewritr</h3>
+            <p>使用 macOS 菜单栏应用的全局快捷键。Rewritr 通过标准 macOS 自动化复制选区。</p>
+          </article>
+          <article class="step-card">
+            <span>03</span>
+            <h3>预览或替换</h3>
+            <p>你可以先检查改写结果，也可以在需要最快流程时直接替换。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="different" aria-labelledby="different-title">
+        <div class="container section-heading">
+          <p class="eyebrow">设计上的不同</p>
+          <h2 id="different-title">更窄的工具，更少隐藏代价。</h2>
+        </div>
+        <div class="container difference-grid">
+          <article>
+            <h3>不局限在浏览器里</h3>
+            <p>可用于支持标准复制粘贴的普通 macOS 应用和浏览器文本框。</p>
+          </article>
+          <article>
+            <h3>不围绕账号运行</h3>
+            <p>没有 Rewritr 登录、托管工作区、用量面板或服务端改写历史。</p>
+          </article>
+          <article>
+            <h3>不是付费墙后的 AI 套件</h3>
+            <p>应用只专注一件事：用你控制的 provider 自然地改写选中的英文。</p>
+          </article>
+          <article>
+            <h3>不过度正式</h3>
+            <p>默认改写目标是清晰、接近母语的日常英文，而不是学术或论文式表达。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section muted" id="screenshots" aria-labelledby="screenshots-title">
+        <div class="container section-heading">
+          <p class="eyebrow">截图</p>
+          <h2 id="screenshots-title">设置应该清楚易懂，而不是让人猜。</h2>
+        </div>
+        <div class="container screenshot-showcase">
+          <figure class="screenshot primary-shot">
+            <div class="shot-copy">
+              <span>Provider 与行为</span>
+              <h3>由你决定改写发生在哪里。</h3>
+              <p>在一个地方配置完整的 OpenAI-compatible endpoint、模型、可选 API key、改写模式和快捷键。</p>
+            </div>
+            <img src="../assets/screenshot_settings.png" alt="Rewritr settings with provider configuration and rewrite behavior" />
+          </figure>
+          <div class="supporting-shots">
+            <figure class="screenshot compact-shot">
+              <img src="../assets/screenshot_permissions.png" alt="Rewritr permission setup screen with Accessibility permission status" />
+              <figcaption>
+                <strong>清楚解释权限</strong>
+                Rewritr 会在 macOS 请求权限前说明为什么需要辅助功能权限。
+              </figcaption>
+            </figure>
+            <figure class="screenshot compact-shot">
+              <img src="../assets/screenshot_privacy.png" alt="Rewritr privacy page showing local storage and provider transparency" />
+              <figcaption>
+                <strong>隐私说明可见</strong>
+                应用明确说明哪些内容留在本地、哪些内容会发送，以及它不会收集什么。
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section limits" id="limits" aria-labelledby="limits-title">
+        <div class="container split-layout">
+          <div>
+            <p class="eyebrow">兼容性</p>
+            <h2 id="limits-title">最适合普通可编辑文本。</h2>
+          </div>
+          <div class="limit-list">
+            <p>Rewritr 最适合支持标准选区、⌘-C 和 ⌘-V 的应用和浏览器输入框。</p>
+            <p>安全输入框、Terminal、远程桌面、虚拟机、浏览器 IDE，以及焦点处理特殊的应用可能受限。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta" aria-labelledby="cta-title">
+        <div class="container cta-inner">
+          <div>
+            <p class="eyebrow">免费且开源</p>
+            <h2 id="cta-title">试用 Rewritr，或先查看源码。</h2>
+          </div>
+          <div class="hero-actions">
+            <a class="button primary" href="https://github.com/jameswei/rewritr/releases">下载 macOS 版本</a>
+            <a class="button secondary dark" href="https://github.com/jameswei/rewritr">在 GitHub 查看</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>Built by <a href="https://github.com/jameswei">jameswei</a></span>
+        <span><a href="https://github.com/jameswei/rewritr">Repository</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -32,6 +32,13 @@ body {
   line-height: 1.6;
 }
 
+:lang(zh-Hans),
+:lang(zh-Hant),
+:lang(ja) {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
 img {
   display: block;
   max-width: 100%;
@@ -88,6 +95,7 @@ a {
 }
 
 .nav-links a:hover,
+.language-switcher a:hover,
 .footer a:hover {
   color: var(--accent);
 }
@@ -99,6 +107,32 @@ a {
   background: var(--surface);
   color: var(--text);
   font-weight: 680;
+}
+
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.language-switcher a {
+  min-width: 28px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.language-switcher a[aria-current="page"] {
+  background: var(--surface-green);
+  color: var(--green-strong);
+  font-weight: 760;
 }
 
 .container {
@@ -522,6 +556,11 @@ h3 {
     gap: 14px;
     overflow-x: auto;
     padding-bottom: 4px;
+  }
+
+  .language-switcher {
+    max-width: 100%;
+    overflow-x: auto;
   }
 
   .hero {

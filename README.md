@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/jameswei/rewritr/actions/workflows/ci.yml/badge.svg)](https://github.com/jameswei/rewritr/actions/workflows/ci.yml)
 
+Languages: English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
+
 <p align="center">
   <img src="assets/app-icon.png" width="96" alt="Rewritr app icon"/>
 </p>
