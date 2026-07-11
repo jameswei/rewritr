@@ -214,6 +214,21 @@ h3 {
   font-size: 17px;
 }
 
+.name-note {
+  max-width: 620px;
+  margin: 20px 0 0;
+  padding-left: 14px;
+  border-left: 3px solid rgba(33, 122, 75, 0.34);
+  color: #485662;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.name-note strong {
+  color: var(--text);
+  font-weight: 760;
+}
+
 .mobile-line {
   display: inline;
 }

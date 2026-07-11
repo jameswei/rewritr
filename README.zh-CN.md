@@ -8,7 +8,7 @@
   <img src="assets/app-icon.png" width="96" alt="Rewritr app icon"/>
 </p>
 
-**项目网站：** http://lifeplayer.space/rewritr/
+**项目网站：** https://lifeplayer.space/rewritr/
 
 Rewritr 是一个隐私优先的原生 macOS 菜单栏应用，面向希望把英文写得更自然、更顺畅、更接近母语表达的非英语母语用户。
 

@@ -8,7 +8,7 @@
   <img src="assets/app-icon.png" width="96" alt="Rewritr app icon"/>
 </p>
 
-**專案網站：** http://lifeplayer.space/rewritr/
+**專案網站：** https://lifeplayer.space/rewritr/
 
 Rewritr 是一個隱私優先的原生 macOS 選單列 app，面向希望把英文寫得更自然、更順暢、更接近母語表達的非英語母語使用者。
 

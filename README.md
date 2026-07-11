@@ -8,7 +8,9 @@ Languages: English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-
   <img src="assets/app-icon.png" width="96" alt="Rewritr app icon"/>
 </p>
 
-**Project site:** http://lifeplayer.space/rewritr/
+**Project site:** https://lifeplayer.space/rewritr/
+
+> Rewritr comes from `Rewriter`, a real English word for someone who revises writing into a better form. The missing letter `e` keeps the name small, light, and a little playful, just like the app itself.
 
 Rewritr is a privacy-first, native macOS menu bar app for non-native English speakers who want selected English to sound smoother, more natural, and more native-like.
 

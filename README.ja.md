@@ -8,7 +8,7 @@
   <img src="assets/app-icon.png" width="96" alt="Rewritr app icon"/>
 </p>
 
-**プロジェクトサイト：** http://lifeplayer.space/rewritr/
+**プロジェクトサイト：** https://lifeplayer.space/rewritr/
 
 Rewritr は、英語をより自然でなめらか、ネイティブらしい表現に整えたい非ネイティブ英語話者のための、プライバシー重視のネイティブ macOS メニューバーアプリです。
 
