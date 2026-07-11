@@ -8,7 +8,7 @@
 
 **Project site:** http://lifeplayer.space/rewritr/
 
-Rewritr is a native macOS menu bar app for non-native English speakers who want selected English to sound smoother, more natural, and more native-like.
+Rewritr is a privacy-first, native macOS menu bar app for non-native English speakers who want selected English to sound smoother, more natural, and more native-like.
 
 It is intentionally small: select text in another app, trigger Rewritr, and replace the selected text with a clearer version. Rewritr preserves meaning and avoids academic, thesis-style, overly formal, slangy, or filler-heavy English.
 
