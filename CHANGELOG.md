@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 - 2026-07-12
+
+### Added
+
+- Added a HUD appearance preference for instant replacement, with Minimal as the default and Classic as an alternative.
+
+### Changed
+
+- Refined instant-rewrite status feedback with clearer wording, a compact Minimal HUD, and longer visibility for failures that require manual pasting.
+- Made Settings a larger, fixed one-page window so Provider, Rewrite, and Shortcut configuration are available without scrolling.
+
 ## 1.0.1 - 2026-07-11
 
 ### Fixed

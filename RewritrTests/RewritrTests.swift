@@ -594,6 +594,51 @@ final class RewritrTests: XCTestCase {
         XCTAssertEqual(copiedValue, "result")
     }
 
+    func testHUDAppearancesUseConsistentCopyAndTiming() {
+        for style in RewriteStatusHUDStyle.allCases {
+            let rewriting = RewriteStatusHUDPresentation(state: .rewriting, style: style)
+            let applying = RewriteStatusHUDPresentation(state: .applyingRewrite, style: style)
+            let success = RewriteStatusHUDPresentation(state: .success, style: style)
+            let fallback = RewriteStatusHUDPresentation(state: .pasteFallback, style: style)
+            let genericFailure = RewriteStatusHUDPresentation(state: .genericFailure, style: style)
+            let noSelection = RewriteStatusHUDPresentation(state: .noSelection, style: style)
+
+            XCTAssertEqual(rewriting.message, "Rewriting selected text...")
+            XCTAssertEqual(applying.message, "Applying rewrite...")
+            XCTAssertEqual(success.message, "Rewrite applied")
+            XCTAssertEqual(success.dismissDelayNanoseconds, 1_600_000_000)
+            XCTAssertEqual(fallback.message, "Couldn't replace. Copied for pasting.")
+            XCTAssertEqual(fallback.dismissDelayNanoseconds, 3_000_000_000)
+            XCTAssertEqual(genericFailure.message, "Rewrite couldn't be completed")
+            XCTAssertEqual(genericFailure.dismissDelayNanoseconds, 3_000_000_000)
+            XCTAssertEqual(noSelection.message, "No text selected")
+            XCTAssertEqual(noSelection.dismissDelayNanoseconds, 3_000_000_000)
+        }
+    }
+
+    func testHUDAppearanceDefaultsToMinimalAndPersistsSelection() {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try! XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+
+        XCTAssertEqual(RewriteStatusHUDStyle.load(from: defaults), .minimalSystem)
+        RewriteStatusHUDStyle.classic.save(to: defaults)
+        XCTAssertEqual(RewriteStatusHUDStyle.load(from: defaults), .classic)
+    }
+
+    @MainActor
+    func testSettingsStorePersistsHUDAppearanceImmediately() {
+        let suiteName = "RewritrTests.\(UUID().uuidString)"
+        let defaults = try! XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = SettingsStore(defaults: defaults)
+
+        store.updateRewriteStatusHUDStyle(.classic)
+
+        XCTAssertEqual(defaults.integer(forKey: SettingsKey.rewriteStatusHUDStyle), RewriteStatusHUDStyle.classic.rawValue)
+        XCTAssertEqual(SettingsStore(defaults: defaults).rewriteStatusHUDStyle, .classic)
+    }
+
     private func testConfig() -> ProviderConfig {
         ProviderConfig(
             baseURL: "https://api.example.com/v1/chat/completions",

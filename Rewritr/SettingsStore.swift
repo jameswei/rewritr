@@ -15,6 +15,7 @@ final class SettingsStore: ObservableObject {
     @Published var apiKeyInput: String = ""
     @Published var requestTimeoutSeconds: Int
     @Published var rewriteBehavior: RewriteBehavior
+    @Published var rewriteStatusHUDStyle: RewriteStatusHUDStyle
     @Published var shortcut: ShortcutConfiguration
     @Published private(set) var hasStoredAPIKey: Bool
     @Published private(set) var testState: TestState = .idle
@@ -40,6 +41,7 @@ final class SettingsStore: ObservableObject {
         requestTimeoutSeconds = defaults.object(forKey: SettingsKey.requestTimeoutSeconds) as? Int ?? 20
         let behaviorValue = defaults.string(forKey: SettingsKey.rewriteBehavior) ?? RewriteBehavior.previewBeforeReplacing.rawValue
         rewriteBehavior = RewriteBehavior(rawValue: behaviorValue) ?? .previewBeforeReplacing
+        rewriteStatusHUDStyle = RewriteStatusHUDStyle.load(from: defaults)
         shortcut = ShortcutConfiguration.load(from: defaults)
         hasStoredAPIKey = (try? keychain.read(account: ProviderConfig.apiKeyKeychainID))?.isEmpty == false
         isReadyForAutosave = true
@@ -89,6 +91,11 @@ final class SettingsStore: ObservableObject {
         autosaveNormalSettings()
     }
 
+    func updateRewriteStatusHUDStyle(_ value: RewriteStatusHUDStyle) {
+        rewriteStatusHUDStyle = value
+        autosaveNormalSettings()
+    }
+
     func updateShortcut(_ value: ShortcutConfiguration) {
         shortcut = value
         shortcut.save(to: defaults)
@@ -109,6 +116,7 @@ final class SettingsStore: ObservableObject {
         defaults.set(providerModel.trimmingCharacters(in: .whitespacesAndNewlines), forKey: SettingsKey.providerModel)
         defaults.set(requestTimeoutSeconds, forKey: SettingsKey.requestTimeoutSeconds)
         defaults.set(rewriteBehavior.rawValue, forKey: SettingsKey.rewriteBehavior)
+        rewriteStatusHUDStyle.save(to: defaults)
         saveMessage = "Settings saved automatically."
     }
 
@@ -196,6 +204,7 @@ enum SettingsKey {
     static let shortcutKeyCode = "shortcutKeyCode"
     static let shortcutModifiers = "shortcutModifiers"
     static let rewriteBehavior = "rewriteBehavior"
+    static let rewriteStatusHUDStyle = "rewriteStatusHUDStyle"
     static let hasCompletedOnboarding = "hasCompletedOnboarding"
 }
 

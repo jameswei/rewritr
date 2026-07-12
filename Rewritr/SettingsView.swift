@@ -6,113 +6,124 @@ struct SettingsView: View {
     @StateObject private var store = SettingsStore()
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                SettingsSection(title: "Provider") {
-                    LabeledField(label: "Provider URL") {
-                        TextField(
-                            "https://api.example.com/v1/chat/completions",
-                            text: Binding(
-                                get: { store.providerBaseURL },
-                                set: { store.updateProviderBaseURL($0) }
-                            )
+        VStack(alignment: .leading, spacing: 0) {
+            SettingsSection(title: "Provider") {
+                LabeledField(label: "Provider URL") {
+                    TextField(
+                        "https://api.example.com/v1/chat/completions",
+                        text: Binding(
+                            get: { store.providerBaseURL },
+                            set: { store.updateProviderBaseURL($0) }
                         )
-                            .textFieldStyle(.roundedBorder)
-                        HelpText("Enter the full Chat Completions endpoint for your provider. Rewritr sends requests to this exact URL.")
-                    }
-                    LabeledField(label: "Model") {
-                        TextField(
-                            "Model name",
-                            text: Binding(
-                                get: { store.providerModel },
-                                set: { store.updateProviderModel($0) }
-                            )
-                        )
-                            .textFieldStyle(.roundedBorder)
-                        HelpText("A fast, inexpensive chat model is usually enough for natural English rewriting.")
-                    }
-                    LabeledField(label: "API key") {
-                        SecureField(store.apiKeyPlaceholder, text: $store.apiKeyInput)
-                            .textFieldStyle(.roundedBorder)
-                        HelpText("Cloud providers usually require a key. Local OpenAI-compatible servers may not. A new key is stored locally in macOS Keychain only after Test Connection succeeds.")
-                        if store.hasStoredAPIKey {
-                            HStack {
-                                Text("Stored API key: ********")
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                                Button {
-                                    store.clearStoredAPIKey()
-                                } label: {
-                                    Image(systemName: "trash")
-                                }
-                                .buttonStyle(.borderless)
-                                .help("Remove stored API key")
-                            }
-                        }
-                    }
-                    Stepper(
-                        "Timeout: \(store.requestTimeoutSeconds) seconds",
-                        value: Binding(
-                            get: { store.requestTimeoutSeconds },
-                            set: { store.updateRequestTimeoutSeconds($0) }
-                        ),
-                        in: 5...60,
-                        step: 5
                     )
-
-                    HStack {
-                        Button("Test Connection") {
-                            Task {
-                                await store.testProvider()
-                            }
-                        }
-                        .disabled(!store.canTestProvider)
-
-                        Spacer()
-                    }
-
-                    statusView
+                        .textFieldStyle(.roundedBorder)
+                    HelpText("Enter the full Chat Completions endpoint for your provider. Rewritr sends requests to this exact URL.")
                 }
-                SettingsDivider()
-
-                SettingsSection(title: "Rewrite") {
-                    Picker("Behavior", selection: $store.rewriteBehavior) {
-                        ForEach(RewriteBehavior.allCases) { behavior in
-                            Text(behavior.displayName).tag(behavior)
+                LabeledField(label: "Model") {
+                    TextField(
+                        "Model name",
+                        text: Binding(
+                            get: { store.providerModel },
+                            set: { store.updateProviderModel($0) }
+                        )
+                    )
+                        .textFieldStyle(.roundedBorder)
+                    HelpText("A fast, inexpensive chat model is usually enough for natural English rewriting.")
+                }
+                LabeledField(label: "API key") {
+                    SecureField(store.apiKeyPlaceholder, text: $store.apiKeyInput)
+                        .textFieldStyle(.roundedBorder)
+                    HelpText("Cloud providers usually require a key. Local OpenAI-compatible servers may not. A new key is stored locally in macOS Keychain only after Test Connection succeeds.")
+                    if store.hasStoredAPIKey {
+                        HStack {
+                            Text("Stored API key: ********")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                            Button {
+                                store.clearStoredAPIKey()
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Remove stored API key")
                         }
                     }
-                    .pickerStyle(.radioGroup)
-                    .onChange(of: store.rewriteBehavior) { _, _ in
-                        store.updateRewriteBehavior(store.rewriteBehavior)
+                }
+                Stepper(
+                    "Timeout: \(store.requestTimeoutSeconds) seconds",
+                    value: Binding(
+                        get: { store.requestTimeoutSeconds },
+                        set: { store.updateRequestTimeoutSeconds($0) }
+                    ),
+                    in: 5...60,
+                    step: 5
+                )
+
+                HStack {
+                    Button("Test Connection") {
+                        Task {
+                            await store.testProvider()
+                        }
                     }
+                    .disabled(!store.canTestProvider)
 
-                    Text("Preview before replacing is the default. Instant replacement is available for users who prefer a faster flow.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                }
 
-                    Text("Behavior changes save automatically.")
+                statusView
+            }
+            SettingsDivider()
+
+            SettingsSection(title: "Rewrite") {
+                Picker("Behavior", selection: $store.rewriteBehavior) {
+                    ForEach(RewriteBehavior.allCases) { behavior in
+                        Text(behavior.displayName).tag(behavior)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                .onChange(of: store.rewriteBehavior) { _, _ in
+                    store.updateRewriteBehavior(store.rewriteBehavior)
+                }
+
+                if store.rewriteBehavior == .replaceInstantly {
+                    Picker("HUD appearance", selection: $store.rewriteStatusHUDStyle) {
+                        ForEach(RewriteStatusHUDStyle.allCases, id: \.self) { style in
+                            Text(style.displayName).tag(style)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: store.rewriteStatusHUDStyle) { _, _ in
+                        store.updateRewriteStatusHUDStyle(store.rewriteStatusHUDStyle)
+                    }
+                }
+
+                Text("Preview before replacing is the default. Instant replacement is available for users who prefer a faster flow.")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Behavior changes save automatically.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            SettingsDivider()
+
+            SettingsSection(title: "Shortcut") {
+                LabeledField(label: "Global shortcut") {
+                    ShortcutRecorder(shortcut: store.shortcut) { shortcut in
+                        store.updateShortcut(shortcut)
+                    }
+                }
+                HelpText("Default: \(GlobalShortcutController.defaultShortcutLabel). Click the recorder, then press a key combination. Use at least one modifier key.")
+                if let shortcutMessage = store.shortcutMessage {
+                    Text(shortcutMessage)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                SettingsDivider()
-
-                SettingsSection(title: "Shortcut") {
-                    LabeledField(label: "Global shortcut") {
-                        ShortcutRecorder(shortcut: store.shortcut) { shortcut in
-                            store.updateShortcut(shortcut)
-                        }
-                    }
-                    HelpText("Default: \(GlobalShortcutController.defaultShortcutLabel). Click the recorder, then press a key combination. Use at least one modifier key.")
-                    if let shortcutMessage = store.shortcutMessage {
-                        Text(shortcutMessage)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    }
-                }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
         }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     @ViewBuilder

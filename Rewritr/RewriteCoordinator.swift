@@ -67,7 +67,7 @@ final class RewriteCoordinator {
         if behavior == .previewBeforeReplacing {
             showLoading(capture: capture)
         } else {
-            statusHUDPresenter.show(.working("Rewriting..."), anchor: capture.selectionBounds)
+            statusHUDPresenter.show(.rewriting, anchor: capture.selectionBounds)
         }
         activityHandler?(.working("Rewriting selected text..."))
 
@@ -100,20 +100,20 @@ final class RewriteCoordinator {
             previewPresenter.dismiss()
             activityHandler?(.working("Replacing selected text..."))
             if showsHUD {
-                statusHUDPresenter.show(.working("Replacing..."), anchor: capture.selectionBounds)
+                statusHUDPresenter.show(.applyingRewrite, anchor: capture.selectionBounds)
             }
             try await activateSourceApp(for: capture)
             try await clipboardAutomator.pasteText(refinedText)
             activityHandler?(.succeeded("Rewrite replaced."))
             if showsHUD {
-                statusHUDPresenter.show(.success("Replaced"), anchor: capture.selectionBounds)
+                statusHUDPresenter.show(.success, anchor: capture.selectionBounds)
             }
         } catch {
             logger.error("Replacement paste failed: \(error.localizedDescription, privacy: .public)")
             clipboardAutomator.copyTextToClipboard(refinedText)
             activityHandler?(.failed("Could not replace text."))
             if showsHUD {
-                statusHUDPresenter.show(.failure("Could not replace. Copied."), anchor: capture.selectionBounds)
+                statusHUDPresenter.show(.pasteFallback, anchor: capture.selectionBounds)
             } else {
                 showError("Could not paste into the original app. The refined text was copied so you can paste it manually.", retryCapture: capture, anchor: capture.selectionBounds)
             }
@@ -138,7 +138,7 @@ final class RewriteCoordinator {
 
     private func showEmptySelection(anchor: CGRect?) {
         if rewriteService.rewriteBehavior() == .replaceInstantly {
-            statusHUDPresenter.show(.failure("No selected text"), anchor: anchor)
+            statusHUDPresenter.show(.noSelection, anchor: anchor)
             return
         }
 
@@ -155,7 +155,7 @@ final class RewriteCoordinator {
 
     private func showError(_ message: String, retryCapture: SelectedTextCapture? = nil, anchor: CGRect? = nil) {
         if rewriteService.rewriteBehavior() == .replaceInstantly {
-            statusHUDPresenter.show(.failure("Rewrite failed"), anchor: anchor)
+            statusHUDPresenter.show(.genericFailure, anchor: anchor)
             return
         }
 

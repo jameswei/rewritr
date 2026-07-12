@@ -266,9 +266,82 @@ final class RewritePreviewPresenter {
 }
 
 enum RewriteStatusHUDState: Equatable {
-    case working(String)
-    case success(String)
-    case failure(String)
+    case rewriting
+    case applyingRewrite
+    case success
+    case pasteFallback
+    case genericFailure
+    case noSelection
+}
+
+enum RewriteStatusHUDStyle: Int, CaseIterable {
+    case classic = 0
+    case minimalSystem = 1
+
+    var displayName: String {
+        switch self {
+        case .classic:
+            "Classic"
+        case .minimalSystem:
+            "Minimal"
+        }
+    }
+
+    static func load(from defaults: UserDefaults = .standard) -> RewriteStatusHUDStyle {
+        guard let rawValue = defaults.object(forKey: SettingsKey.rewriteStatusHUDStyle) as? Int else {
+            return .minimalSystem
+        }
+        return RewriteStatusHUDStyle(rawValue: rawValue) ?? .minimalSystem
+    }
+
+    func save(to defaults: UserDefaults = .standard) {
+        defaults.set(rawValue, forKey: SettingsKey.rewriteStatusHUDStyle)
+    }
+}
+
+enum RewriteStatusHUDIcon: Equatable {
+    case working
+    case success
+    case failure
+}
+
+struct RewriteStatusHUDPresentation: Equatable {
+    let message: String
+    let icon: RewriteStatusHUDIcon
+    let dismissDelayNanoseconds: UInt64?
+
+    init(state: RewriteStatusHUDState, style: RewriteStatusHUDStyle) {
+        message = Self.refinedMessage(for: state)
+
+        switch state {
+        case .rewriting, .applyingRewrite:
+            icon = .working
+            dismissDelayNanoseconds = nil
+        case .success:
+            icon = .success
+            dismissDelayNanoseconds = 1_600_000_000
+        case .pasteFallback, .genericFailure, .noSelection:
+            icon = .failure
+            dismissDelayNanoseconds = 3_000_000_000
+        }
+    }
+
+    private static func refinedMessage(for state: RewriteStatusHUDState) -> String {
+        switch state {
+        case .rewriting:
+            "Rewriting selected text..."
+        case .applyingRewrite:
+            "Applying rewrite..."
+        case .success:
+            "Rewrite applied"
+        case .pasteFallback:
+            "Couldn't replace. Copied for pasting."
+        case .genericFailure:
+            "Rewrite couldn't be completed"
+        case .noSelection:
+            "No text selected"
+        }
+    }
 }
 
 @MainActor
@@ -276,18 +349,26 @@ final class RewriteStatusHUDPresenter {
     private var panel: NSPanel?
     private var hostingController: NSHostingController<RewriteStatusHUDView>?
     private var dismissTask: Task<Void, Never>?
+    private var displayedState: RewriteStatusHUDState?
+    private var presentationGeneration = 0
 
     func show(_ state: RewriteStatusHUDState, anchor: CGRect? = nil) {
         dismissTask?.cancel()
+        presentationGeneration &+= 1
+        let generation = presentationGeneration
+        displayedState = state
+        let style = currentStyle
         if let panel, let hostingController {
-            hostingController.rootView = RewriteStatusHUDView(state: state)
+            panel.alphaValue = 1
+            hostingController.rootView = RewriteStatusHUDView(state: state, style: style)
+            panel.setContentSize(size(for: state, style: style))
             place(panel: panel, anchor: anchor)
             panel.orderFrontRegardless()
-            scheduleDismissIfNeeded(for: state)
+            scheduleDismissIfNeeded(for: state, style: style, generation: generation)
             return
         }
 
-        let hostingController = NSHostingController(rootView: RewriteStatusHUDView(state: state))
+        let hostingController = NSHostingController(rootView: RewriteStatusHUDView(state: state, style: style))
         let panel = NSPanel(contentViewController: hostingController)
         panel.styleMask = [.borderless, .nonactivatingPanel]
         panel.isReleasedWhenClosed = false
@@ -298,37 +379,98 @@ final class RewriteStatusHUDPresenter {
         panel.hasShadow = true
         panel.ignoresMouseEvents = true
         panel.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
-        panel.setContentSize(NSSize(width: 240, height: 56))
+        panel.setContentSize(size(for: state, style: style))
         place(panel: panel, anchor: anchor)
+        if style != .classic {
+            panel.alphaValue = 0
+        }
         panel.orderFrontRegardless()
+
+        if style != .classic {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.16
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                panel.animator().alphaValue = 1
+            }
+        }
 
         self.panel = panel
         self.hostingController = hostingController
-        scheduleDismissIfNeeded(for: state)
+        scheduleDismissIfNeeded(for: state, style: style, generation: generation)
     }
 
     func dismiss() {
         dismissTask?.cancel()
+        presentationGeneration &+= 1
+        closePanel()
+    }
+
+    private var currentStyle: RewriteStatusHUDStyle {
+        RewriteStatusHUDStyle.load()
+    }
+
+    private func closePanel() {
         panel?.close()
         panel = nil
         hostingController = nil
+        displayedState = nil
     }
 
-    private func scheduleDismissIfNeeded(for state: RewriteStatusHUDState) {
-        switch state {
-        case .working:
+    private func scheduleDismissIfNeeded(
+        for state: RewriteStatusHUDState,
+        style: RewriteStatusHUDStyle,
+        generation: Int
+    ) {
+        guard let delay = RewriteStatusHUDPresentation(state: state, style: style).dismissDelayNanoseconds else {
             return
-        case .success, .failure:
-            dismissTask = Task { [weak self] in
-                do {
-                    try await Task.sleep(nanoseconds: 1_600_000_000)
-                } catch {
+        }
+
+        dismissTask = Task { [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: delay)
+            } catch {
+                return
+            }
+            await MainActor.run {
+                self?.dismissAfterPresentation(style: style, generation: generation)
+            }
+        }
+    }
+
+    private func dismissAfterPresentation(style: RewriteStatusHUDStyle, generation: Int) {
+        guard presentationGeneration == generation, let panel else {
+            return
+        }
+        dismissTask?.cancel()
+
+        guard style != .classic else {
+            closePanel()
+            return
+        }
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.14
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            panel.animator().alphaValue = 0
+        } completionHandler: { [weak self] in
+            Task { @MainActor in
+                guard self?.presentationGeneration == generation else {
                     return
                 }
-                await MainActor.run {
-                    self?.dismiss()
-                }
+                self?.closePanel()
             }
+        }
+    }
+
+    private func size(for state: RewriteStatusHUDState, style: RewriteStatusHUDStyle) -> NSSize {
+        switch style {
+        case .classic:
+            return NSSize(width: 240, height: 56)
+        case .minimalSystem:
+            let messageLength = RewriteStatusHUDPresentation(state: state, style: style).message.count
+            let width = min(290, max(164, 72 + messageLength * 7))
+            let height = messageLength > 31 ? 54 : 38
+            return NSSize(width: CGFloat(width), height: CGFloat(height))
         }
     }
 
@@ -370,11 +512,21 @@ final class RewriteStatusHUDPresenter {
 
 struct RewriteStatusHUDView: View {
     let state: RewriteStatusHUDState
+    let style: RewriteStatusHUDStyle
 
     var body: some View {
+        switch style {
+        case .classic:
+            classicBody
+        case .minimalSystem:
+            minimalSystemBody
+        }
+    }
+
+    private var classicBody: some View {
         HStack(spacing: 10) {
             icon
-            Text(message)
+            Text(presentation.message)
                 .font(.headline)
                 .lineLimit(2)
         }
@@ -388,9 +540,29 @@ struct RewriteStatusHUDView: View {
         )
     }
 
+    private var minimalSystemBody: some View {
+        refinedContent(spacing: 8, font: .callout.weight(.medium))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+            .shadow(color: Color.black.opacity(0.12), radius: 5, y: 1)
+            .transition(.opacity.combined(with: .scale(scale: 0.96)))
+    }
+
+    private func refinedContent(spacing: CGFloat, font: Font) -> some View {
+        HStack(spacing: spacing) {
+            icon
+            Text(presentation.message)
+                .font(font)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     @ViewBuilder
     private var icon: some View {
-        switch state {
+        switch presentation.icon {
         case .working:
             ProgressView()
                 .controlSize(.small)
@@ -403,10 +575,7 @@ struct RewriteStatusHUDView: View {
         }
     }
 
-    private var message: String {
-        switch state {
-        case .working(let message), .success(let message), .failure(let message):
-            message
-        }
+    private var presentation: RewriteStatusHUDPresentation {
+        RewriteStatusHUDPresentation(state: state, style: style)
     }
 }

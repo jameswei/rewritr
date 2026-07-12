@@ -134,8 +134,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func showSettings() {
         windowPresenter.show(
             title: "Rewritr Settings",
-            width: 520,
-            height: 500,
+            width: 600,
+            height: 760,
             rootView: SettingsView()
         )
     }
