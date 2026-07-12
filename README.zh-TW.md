@@ -18,7 +18,7 @@ Rewritr 是一個隱私優先的原生 macOS 選單列 app，面向希望把英�
 
 <table>
   <tr>
-    <td><img src="assets/screenshot_settings.png" width="360" alt="Rewritr settings with provider configuration and rewrite behavior"/></td>
+    <td><img src="assets/screenshot_settings.png" width="360" alt="Rewritr settings with provider configuration, rewrite behavior, HUD appearance, and shortcut"/></td>
     <td><img src="assets/screenshot_permissions.png" width="360" alt="Rewritr permission setup screen with Accessibility permission status"/></td>
   </tr>
   <tr>
