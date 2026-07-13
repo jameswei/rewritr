@@ -39,10 +39,12 @@ It is intentionally small: select text in another app, trigger Rewritr, and repl
 
 Download the latest release from [GitHub Releases](https://github.com/jameswei/rewritr/releases).
 
-The current release artifact is an unsigned macOS app zip. After unzipping:
+The current release artifact is an unsigned macOS app zip. Because it is not signed or notarized by Apple, macOS may block it the first time you open it. Download only from this project's GitHub Releases page and verify the published SHA-256 checksum if you need to confirm the download.
+
+After unzipping:
 
 - Move `Rewritr.app` somewhere stable, such as `/Applications`.
-- Open Rewritr.
+- Try to open Rewritr. If macOS blocks it, open **System Settings > Privacy & Security**, scroll to **Security**, then click **Open Anyway** and confirm **Open**. This approval is needed only once for that app bundle.
 - Grant Accessibility permission when prompted.
 - Configure your OpenAI-compatible provider in Settings. Cloud providers usually require an API key; local OpenAI-compatible models may not.
 
