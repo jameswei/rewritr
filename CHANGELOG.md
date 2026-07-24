@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1 - 2026-07-24
+
+### Added
+
+- Added a DMG download alongside the ZIP release package.
+
+### Changed
+
+- Clarified installation, Gatekeeper approval, and Accessibility permission instructions.
+
 ## 1.1.0 - 2026-07-12
 
 ### Added
