@@ -39,16 +39,23 @@ It is intentionally small: select text in another app, trigger Rewritr, and repl
 
 Download the latest release from [GitHub Releases](https://github.com/jameswei/rewritr/releases).
 
-The current release artifact is an unsigned macOS app zip. Because it is not signed or notarized by Apple, macOS may block it the first time you open it. Download only from this project's GitHub Releases page and verify the published SHA-256 checksum if you need to confirm the download.
+New releases provide the same macOS app in two formats:
 
-After unzipping:
+- **DMG (recommended):** Open the DMG, then drag `Rewritr.app` to the `Applications` shortcut.
+- **ZIP:** Unzip the archive, then move `Rewritr.app` somewhere stable, such as `/Applications`.
 
-- Move `Rewritr.app` somewhere stable, such as `/Applications`.
-- Try to open Rewritr. If macOS blocks it, open **System Settings > Privacy & Security**, scroll to **Security**, then click **Open Anyway** and confirm **Open**. This approval is needed only once for that app bundle.
-- Grant Accessibility permission when prompted.
-- Configure your OpenAI-compatible provider in Settings. Cloud providers usually require an API key; local OpenAI-compatible models may not.
+Older releases may provide only the ZIP. Both formats contain the same unsigned and unnotarized app. Download only from this project's GitHub Releases page and verify the SHA-256 checksum published beside your chosen file if you need to confirm the download.
 
-macOS grants Accessibility permission to the exact app bundle path. If you move the app after granting permission, you may need to grant permission again.
+### Install and approve the unsigned app
+
+Two macOS approvals may be needed: **Open Anyway** because Rewritr is unsigned and unnotarized, and **Accessibility** so Rewritr can automate copy and paste for your selected text.
+
+1. Install `Rewritr.app` in its final location, preferably `/Applications`.
+2. Try to open Rewritr. If macOS blocks it, open **System Settings > Privacy & Security**, scroll to **Security**, click **Open Anyway**, then confirm **Open**.
+3. Open Rewritr again and grant Accessibility permission when prompted.
+4. Configure your OpenAI-compatible provider in Settings. Cloud providers usually require an API key; local providers may not.
+
+The **Open Anyway** approval is normally needed only once. Accessibility permission is tied to the exact app bundle path, so moving the app afterward may require granting it again.
 
 ## How It Works
 
@@ -123,4 +130,4 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## Release
 
-Releases are built by GitHub Actions when a `v*` tag is pushed, or manually through the `Release` workflow. The workflow packages `Rewritr.app` into a zip and attaches it to a GitHub Release with a SHA-256 checksum.
+Releases are built by GitHub Actions when a `v*` tag is pushed, or manually through the `Release` workflow. The workflow packages `Rewritr.app` as both a DMG and a ZIP, verifies both packages, and attaches both files and their SHA-256 checksums to the GitHub Release.

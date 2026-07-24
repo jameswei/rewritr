@@ -37,14 +37,23 @@ Rewritr は、英語をより自然でなめらか、ネイティブらしい表
 
 最新バージョンは [GitHub Releases](https://github.com/jameswei/rewritr/releases) からダウンロードできます。
 
-現在のリリース成果物は、署名されていない macOS app zip です。解凍後：
+新しいリリースでは、同じ macOS アプリを 2 つの形式で提供します：
 
-- `Rewritr.app` を `/Applications` などの安定した場所へ移動します。
-- Rewritr を開きます。
-- 案内に従ってアクセシビリティ権限を付与します。
-- Settings で OpenAI-compatible provider を設定します。クラウド provider は通常 API key が必要ですが、ローカルの OpenAI-compatible モデルでは不要な場合があります。
+- **DMG（推奨）：** DMG を開き、`Rewritr.app` を `Applications` ショートカットへドラッグします。
+- **ZIP：** ZIP を解凍し、`Rewritr.app` を `/Applications` などの固定した場所へ移動します。
 
-macOS のアクセシビリティ権限は、実行している app bundle のパスに紐づきます。権限付与後にアプリを移動した場合、再度権限を付与する必要があるかもしれません。
+古いリリースでは ZIP のみが提供されている場合があります。どちらも、Apple による署名や公証がない同じアプリを含みます。このプロジェクトの GitHub Releases ページからのみダウンロードし、必要に応じて各ファイルと一緒に公開されている SHA-256 チェックサムで確認してください。
+
+### 未署名アプリのインストールと許可
+
+macOS で 2 つの許可が必要になる場合があります。Rewritr は署名も公証もされていないため**このまま開く**が必要です。また、選択したテキストのコピーとペーストを自動化するため、**アクセシビリティ**権限が必要です。
+
+1. `Rewritr.app` を最終的な場所（推奨：`/Applications`）へインストールします。
+2. Rewritr を開きます。macOS にブロックされた場合は、**システム設定 > プライバシーとセキュリティ**を開き、**セキュリティ**までスクロールして**このまま開く**をクリックし、**開く**を確認します。
+3. Rewritr をもう一度開き、案内に従ってアクセシビリティ権限を付与します。
+4. Settings で OpenAI-compatible provider を設定します。クラウド provider は通常 API key が必要ですが、ローカル provider では不要な場合があります。
+
+**このまま開く**の確認は通常 1 回だけです。アクセシビリティ権限は app bundle の正確なパスに紐づくため、後からアプリを移動すると再度権限が必要になる場合があります。
 
 ## 仕組み
 
@@ -119,4 +128,4 @@ xcodebuild -project Rewritr.xcodeproj -scheme Rewritr -configuration Debug -dest
 
 ## リリース
 
-`v*` tag が push されたとき、または `Release` workflow を手動実行したときに、GitHub Actions がリリースをビルドします。workflow は `Rewritr.app` を zip にパッケージし、SHA-256 チェックサムと一緒に GitHub Release へ添付します。
+`v*` tag が push されたとき、または `Release` workflow を手動実行したときに、GitHub Actions がリリースをビルドします。workflow は `Rewritr.app` を DMG と ZIP の両方にパッケージし、両方を検証して、各ファイルと SHA-256 チェックサムを GitHub Release へ添付します。

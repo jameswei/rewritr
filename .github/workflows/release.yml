@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   build-release:
-    name: Build release artifact
+    name: Build release artifacts
     runs-on: macos-15
 
     steps:
@@ -42,21 +42,42 @@ jobs:
             build \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Package app
+      - name: Package app as ZIP and DMG
         env:
           RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           APP_PATH="$RUNNER_TEMP/rewritr-derived/Build/Products/Release/Rewritr.app"
           ARTIFACT_DIR="$RUNNER_TEMP/rewritr-artifacts"
-          mkdir -p "$ARTIFACT_DIR"
-          ditto -c -k --keepParent "$APP_PATH" "$ARTIFACT_DIR/Rewritr-${RELEASE_TAG}.zip"
-          shasum -a 256 "$ARTIFACT_DIR/Rewritr-${RELEASE_TAG}.zip" > "$ARTIFACT_DIR/Rewritr-${RELEASE_TAG}.zip.sha256"
+          DMG_ROOT="$RUNNER_TEMP/rewritr-dmg"
+          ZIP_PATH="$ARTIFACT_DIR/Rewritr-${RELEASE_TAG}.zip"
+          DMG_PATH="$ARTIFACT_DIR/Rewritr-${RELEASE_TAG}.dmg"
+
+          mkdir -p "$ARTIFACT_DIR" "$DMG_ROOT"
+
+          ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+          unzip -t "$ZIP_PATH"
+
+          ditto "$APP_PATH" "$DMG_ROOT/Rewritr.app"
+          ln -s /Applications "$DMG_ROOT/Applications"
+          hdiutil create \
+            -volname "Rewritr" \
+            -srcfolder "$DMG_ROOT" \
+            -format UDZO \
+            -ov \
+            "$DMG_PATH"
+          hdiutil verify "$DMG_PATH"
+
+          cd "$ARTIFACT_DIR"
+          shasum -a 256 "Rewritr-${RELEASE_TAG}.zip" > "Rewritr-${RELEASE_TAG}.zip.sha256"
+          shasum -a 256 "Rewritr-${RELEASE_TAG}.dmg" > "Rewritr-${RELEASE_TAG}.dmg.sha256"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: Rewritr-${{ github.event.inputs.tag || github.ref_name }}
           path: |
+            ${{ runner.temp }}/rewritr-artifacts/Rewritr-${{ github.event.inputs.tag || github.ref_name }}.dmg
+            ${{ runner.temp }}/rewritr-artifacts/Rewritr-${{ github.event.inputs.tag || github.ref_name }}.dmg.sha256
             ${{ runner.temp }}/rewritr-artifacts/Rewritr-${{ github.event.inputs.tag || github.ref_name }}.zip
             ${{ runner.temp }}/rewritr-artifacts/Rewritr-${{ github.event.inputs.tag || github.ref_name }}.zip.sha256
 
@@ -65,18 +86,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
-          RELEASE_NOTES="Unsigned macOS build. Download Rewritr-${RELEASE_TAG}.zip, unzip it, move Rewritr.app to a stable location such as /Applications, and grant Accessibility permission to that app bundle path."
+          RELEASE_NOTES="Unsigned and unnotarized macOS build. Recommended: download Rewritr-${RELEASE_TAG}.dmg, open it, and drag Rewritr.app to Applications. Alternatively, download the ZIP, unzip it, and move Rewritr.app to a stable location. If macOS blocks the app, open System Settings > Privacy & Security, click Open Anyway, and confirm Open. Then open Rewritr again and grant Accessibility permission to the app at its final path."
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" \
               --title "Rewritr ${RELEASE_TAG}" \
               --notes "$RELEASE_NOTES"
             gh release upload "$RELEASE_TAG" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.dmg" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.dmg.sha256" \
               "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip" \
               "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip.sha256" \
               --clobber
           else
             gh release create "$RELEASE_TAG" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.dmg" \
+              "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.dmg.sha256" \
               "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip" \
               "$RUNNER_TEMP/rewritr-artifacts/Rewritr-${RELEASE_TAG}.zip.sha256" \
               --title "Rewritr ${RELEASE_TAG}" \

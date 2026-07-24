@@ -127,10 +127,11 @@ The public release flow is handled by `.github/workflows/release.yml` when a `v*
 
 Release builds are unsigned and not notarized because this project does not assume a paid Apple Developer account. User-facing install notes should say:
 
-- Download the zip.
-- Unzip it.
-- Move `Rewritr.app` to a stable path such as `/Applications`.
-- Grant Accessibility permission to that exact app bundle path.
+- Choose the DMG (recommended) or ZIP from the GitHub Release.
+- For the DMG, open it and drag `Rewritr.app` to Applications.
+- For the ZIP, unzip it and move `Rewritr.app` to a stable path such as `/Applications`.
+- If macOS blocks the unsigned app, use **System Settings > Privacy & Security > Open Anyway**, then confirm **Open**.
+- Grant Accessibility permission to the app at its final path so selected-text copy/paste automation can work.
 
 macOS Accessibility permission is tied to the app bundle path. Moving the app after granting permission may require granting permission again.
 
